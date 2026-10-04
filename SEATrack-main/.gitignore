@@ -1,0 +1,8 @@
+*.zip
+tensorboard
+__pycache__
+*.pth.tar
+rgbd-unsupervised
+baseline
+*_Results
+sequences

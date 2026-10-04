@@ -1,0 +1,2195 @@
+
+
+===== PAGE 1 =====
+
+SEATrack: Simple, Efficient, and Adaptive Multimodal Tracker
+Junbin Su1∗, Ziteng Xue2∗, Shihui Zhang1,3B, Kun Chen1, Weiming Hu4,5, Zhipeng Zhang6B
+1School of Artificial Intelligence (School of Software), Yanshan University
+2School of Software, Beihang University
+3Hebei Key Laboratory of Computer Virtual Technology and System Integration
+4State Key Laboratory of Multimodal Artificial Intelligence Systems (MAIS), CASIA
+5School of Artificial Intelligence, UCAS
+6AutoLab, School of Artificial Intelligence, Shanghai Jiao Tong University
+Abstract
+Parameter-efficient fine-tuning (PEFT) in multimodal track-
+ing reveals a concerning trend where recent performance
+gains are often achieved at the cost of inflated parame-
+ter budgets, which fundamentally erodes PEFT’s efficiency
+promise. In this work, we introduce SEATrack, a Simple,
+Efficient, and Adaptive two-stream multimodal tracker that
+tackles this performance-efficiency dilemma from two com-
+plementary perspectives.
+We first prioritize cross-modal
+alignment of matching responses, an underexplored yet
+pivotal factor that we argue is essential for breaking the
+trade-off.
+Specifically, we observe that modality-specific
+biases in existing two-stream methods generate conflict-
+ing matching attention maps, thereby hindering effective
+joint representation learning. To mitigate this, we propose
+AMG-LoRA, which seamlessly integrates Low-Rank Adap-
+tation (LoRA) for domain adaptation with Adaptive Mu-
+tual Guidance (AMG) to dynamically refine and align at-
+tention maps across modalities. We then depart from con-
+ventional local fusion approaches by introducing a Hier-
+archical Mixture of Experts (HMoE) that enables efficient
+global relation modeling, effectively balancing expressive-
+ness and computational efficiency in cross-modal fusion.
+Equipped with these innovations, SEATrack advances no-
+table progress over state-of-the-art methods in balancing
+performance with efficiency across RGB-T, RGB-D, and
+RGB-E tracking tasks. Code is available.
+1. Introduction
+Object tracking aims to localize a target in a video given
+its initial appearance. While modern RGB trackers handle
+most scenarios effectively, their reliance on a single modal-
+ity renders them vulnerable to common real-world chal-
+lenges like drastic illumination changes and rapid motion.
+Consequently, multimodal tracking has gained substantial
+∗Equal contribution
+B Corresponding author
+Figure 1. Previous frameworks v.s. SEATrack. (a) The previous
+one-stream method [55] suffers from attention shifting when per-
+forming intra-modal matching on mixed inputs. (b) Similarly, do-
+main gaps cause attention maps’ inconsistency in the two-stream
+method [11]. (c) Our method is able to produce aligned and re-
+fined attention maps, which facilitate cross-modal fusion.
+traction by fusing complementary data sources to achieve
+the robustness required to handle such difficult cases.
+A prevailing strategy in multimodal tracking is to adapt
+pre-trained RGB trackers for heterogeneous modalities
+such as thermal, depth, or event data (collectively, X-
+modal). While leveraging powerful prior knowledge, the
+approach faces notable limitations under both full fine-
+tuning (FFT) and parameter-efficient fine-tuning (PEFT)
+paradigms. Specifically, with FFT, updating the entire net-
+work with limited multimodal data often leads to catas-
+trophic forgetting of learned knowledge [8, 19, 21]. Fur-
+thermore, the substantial computational cost of FFT makes
+arXiv:2604.12502v1  [cs.CV]  14 Apr 2026
+
+
+===== PAGE 2 =====
+
+it impractical [4, 17, 20]. These drawbacks motivate a fo-
+cus on the PEFT paradigm. Yet, a concerning trend also
+emerges. To achieve or approach the performance of FFT,
+recent state-of-the-art (SOTA) PEFT methods [10, 11, 36,
+43] have drastically increased the number of tunable pa-
+rameters, even up to 16 times more than the pioneering
+work [55].
+This trajectory arguably contradicts the core
+principle of efficiency that justifies PEFT in the first place.
+Beyond the inefficiencies in parameters, significant lim-
+itations are also present in the cross-modal alignment of
+existing PEFT-based trackers. As common sense, a cru-
+cial function in tracking is the matching of features be-
+tween the template and the search region, which is usu-
+ally accomplished via self-attention in recent SOTA ap-
+proaches [6, 28, 32, 47, 54].
+Multimodal trackers in-
+herit this design for intra-modal matching but with sub-
+optimal outcomes. In one-stream architectures, matching
+is performed on mixed-modality features.
+However, the
+knowledge encapsulated in the pre-trained model is intrin-
+sically biased towards the RGB domain. When these model
+weights are kept fixed during training, this domain-specific
+bias prevents effective generalization to the mixed distri-
+bution, manifesting as erroneous attention shifts (Fig.1(a)).
+This phenomenon reinforces the conclusion from [11] that
+one-stream designs are less robust than two-stream meth-
+ods.
+For two-stream ones, this domain gap persists and
+is compounded by dynamic modality reliability, leading to
+inconsistent matching in which conflicting attention maps
+from different modalities hinder effective joint representa-
+tion learning (Fig.1(b)). Besides, a separate long-standing
+challenge lies in designing cross-modal fusion strategies
+that balance expressiveness and efficiency. Although pow-
+erful, attention-based fusion mechanisms incur significant
+computational overhead due to their quadratic complex-
+ity [4, 11, 20, 44]. In contrast, lightweight alternatives like
+local fusion [2, 10, 36, 43, 55] lack a global respective field,
+which limits their expressive power.
+This makes us wonder: is there a way to balance perfor-
+mance and efficiency in multimodal tracking elegantly? We
+provide an affirmative answer to this challenge by propos-
+ing SEATrack, a multimodal tracker designed to be Simple,
+Efficient, and Adaptive. Architecturally, it employs a two-
+stream design for tracking robustness and a PEFT paradigm
+for training efficiency.
+To address the critical challenges of domain gap and
+attention inconsistency within existing two-stream mod-
+els, we introduce Adaptive Mutual Guidance Low-Rank
+Adaptation (AMG-LoRA). The central idea of our approach
+stems from a fundamental hypothesis that, since multimodal
+inputs are spatio-temporally aligned, the responses of intra-
+modal target matching should, in principle, be consistent
+with each other.
+We leverage this expected consistency
+by proposing a cross-modal guidance mechanism. Specif-
+ically, the matching information derived from one modal-
+ity is used to condition and guide the matching process in
+the other. This reciprocal exchange enables mutual rein-
+forcement between modalities, yielding more robust joint
+representations. More concretely, we first employ LoRA
+within the attention layer’s projection matrices to facilitate
+domain adaptation. Recognizing that the target’s selective
+emphasis on each modality varies with the scenario [2, 16],
+we contend that the alignment must be dynamic.
+We
+achieve this through Adaptive Mutual Guidance (AMG),
+a mechanism that dynamically refines and aligns attention
+maps across modalities.
+Inspired by classifier-free guid-
+ance (CFG) [9], AMG reformulates cross-modal alignment
+as a multi-branch trade-off problem. It treats one modal-
+ity’s discriminative prior as the “unconditional” branch and
+the other as the “conditional” branch, enabling bidirectional
+interaction.
+As we will show, AMG-LoRA effectively
+addresses domain gaps and attention alignment (Fig.1(c))
+while boosting cross-modal fusion with negligible addi-
+tional latency. In response to the long-standing challenge in
+cross-modal fusion, we introduce an efficient global relation
+modeler dubbed Hierarchical Mixture-of-Experts (HMoE).
+Distinct from existing explorations [1, 5, 37] that focus on
+expert-level ensemble learning via top-k or dense routing,
+HMoE further enables fine-grained interaction from sub-
+token to token level through a hierarchical soft routing. In
+this way, HMoE functions as an effective token mixer for
+cross-modal fusion.
+Empirically, HMoE achieves about
+35% faster speed (FPS) compared to its attention-based
+counterpart, while maintaining comparable performance.
+Overall,
+our contributions are:
+♠We introduce
+SEATrack, a Simple, Efficient, and Adaptive multimodal
+tracker that achieves a new state-of-the-art result in bal-
+ancing performance with efficiency. ✦We target the un-
+derexplored challenge of cross-modal attention alignment
+by proposing Adaptive Mutual Guidance Low-Rank Adap-
+tation (AMG-LoRA). Extensive experiments show that
+it holds strong potential as a solid baseline, offering a
+novel perspective on resolving the performance-efficiency
+dilemma. ♣We propose Hierarchical MoE (HMoE) as the
+response to the long-standing challenge in cross-modal fu-
+sion.
+As an efficient global relation modeler, it delivers
+about a 35% FPS speed-up over attention-based counter-
+parts while maintaining comparable performance.
+2. Related Works
+2.1. Multimodal Tracking
+While RGB-only tracking achieves remarkable success, it
+still struggles in challenging scenarios. Therefore, several
+multimodal datasets [24, 25, 45] and methods [7, 30, 51]
+have been proposed to enable all-weather and all-day track-
+ing.
+Existing methods can be roughly categorized into
+two branches based on fine-tuning strategies.
+The first
+
+
+===== PAGE 3 =====
+
+branch fully fine-tunes (FFT) pre-trained RGB trackers
+(termed foundation tracker) to different fields. Specifically,
+DeT [45] attaches the depth flow branch to a ResNet-based
+foundation tracker and fine-tunes it on RGB-D datasets.
+TBSI [20] pioneers the extension of ViT-based foundation
+trackers for RGB-T tracking. However, as foundation track-
+ers evolve with larger backbones, FFT becomes both com-
+putationally prohibitive and prone to catastrophic forgetting
+on limited multimodal data [8, 19, 21].
+The aforementioned drawbacks motivate a focus on the
+PEFT paradigm, which freezes all or most of the parame-
+ters of the foundation tracker and inserts lightweight mod-
+ules for cross-modal adaptation and interaction.
+Early
+approaches mainly explore prompt-based [23] strategies.
+ProTrack [46] pioneers this by generating mixed-modality
+prompts through linear combinations of RGB and X-modal
+features.
+The followers [10, 43, 55] refine this design
+by treating X-modal inputs as layer-wise prompts, fusing
+them with RGB features through proposed prompter blocks.
+Beyond prompt tuning, BAT [2] employs bi-directional
+adapters [12] for mutual information extraction between
+RGB and thermal modalities. XTrack [37] leverages MoE
+to separately extract modality-specific information before
+aggregating them via element-wise addition. Despite the
+diversity in feature extraction ways, the absence of spatial
+interaction restricts these methods to performing local fu-
+sion with constrained expressiveness. SDSTrack [11] ad-
+dresses this by reusing frozen attention layers for global in-
+formation interaction. However, attention mechanisms suf-
+fer from limited efficiency due to their quadratic complex-
+ity. In response to this limitation, we introduce Hierarchi-
+cal MoE (HMoE), an efficient global relation modeler for
+cross-modal fusion.
+2.2. Cross-modal Alignment
+As another fundamental concept in multimodal learning,
+alignment aims to ensure that different modalities are prop-
+erly matched and synchronized. CLIP [31] and its follow-
+up [27] achieve this in vision-language tasks through con-
+trastive learning, demonstrating remarkable zero-shot ca-
+pabilities. In autonomous driving, camera-LiDAR align-
+ment forms the foundation for robust multi-sensor percep-
+tion [40, 48]. Although alignment has proven necessary in
+these fields, multimodal tracking research focuses primar-
+ily on cross-modal fusion strategies [14, 15, 17, 18, 33, 34,
+43, 44]. Some works [26, 52] explore feature-level spa-
+tial alignment but overlook inconsistent intra-modal match-
+ing as a critical issue in current two-stream architectures.
+To this end, we propose Adaptive Mutual Guidance Low-
+Rank Adaptation (AMG-LoRA) for cross-modal alignment
+of such responses (attention maps). Extensive experiments
+demonstrate that effective alignment is promising for break-
+ing the efficiency-performance dilemma.
+3. Method
+In this paper, we propose SEATrack, a simple, efficient,
+and adaptive multimodal tracker. The overall pipeline of
+SEATrack is presented in Fig. 2, which consists of the
+frozen foundation tracker and learnable task-specific com-
+ponents for cross-modal interaction.
+3.1. Overall Architecture
+The foundation tracker [47] takes an RGB template-
+candidate (search region) image pair as input, which is first
+split into token sequences zrgb ∈RNz×D and crgb ∈RNc×D
+via the patch embedding layer. Subsequently, zrgb and crgb
+are concatenated to form Hrgb = [zrgb; crgb] ∈R(Nz+Nc)×D,
+which is then fed into stacked ViT encoders for joint fea-
+ture extraction and matching between the template and
+the candidate.
+We copy this pipeline to process the X-
+modality input, forming the two-stream architecture shown
+in Fig. 2 and producing token sequences zX ∈RNz×D,
+cX ∈RNc×D, and HX = [zX; cX] ∈R(Nz+Nc)×D corre-
+spondingly. To bridge cross-modal information interaction,
+we introduce Adaptive Mutual Guidance Low-Rank Adap-
+tation (AMG-LoRA) and Hierarchical MoE (HMoE), em-
+bedding them into the ViT encoders every 2 layers. Finally,
+the extracted candidate features from both modalities are
+aggregated via element-wise addition and passed to the pre-
+diction head for target localization.
+3.2. Cross-modal Attention Alignment
+Template-candidate matching is crucial in tracking, typi-
+cally accomplished via self-attention to yield the target’s
+position response. With pre-trained attention layers frozen
+for training efficiency, existing PEFT two-stream meth-
+ods [2, 11, 36] suffer from inconsistent matching caused by
+domain gaps. We argue that, given the multimodal inputs
+are spatio-temporally aligned, conflicting attention maps
+derived from the inconsistent matching hinder joint repre-
+sentation learning. To address this, we propose Adaptive
+Mutual Guidance Low-Rank Adaptation (AMG-LoRA) to
+facilitate domain adaptation while dynamically refining and
+aligning matching attention maps across modalities.
+To generalize the knowledge learned in the RGB do-
+main to multimodal distributions for improving intra-modal
+matching, we leverage LoRA [13] to adapt the pre-trained
+attention weights. As illustrated in Fig. 2, LoRA is adopted
+to update the projection matrices Wk and Wv of the atten-
+tion layer. During training, it serves as a shared bypass for
+RGB and X-modal inputs to facilitate joint representation
+learning. The enhanced matching attention maps can be ob-
+tained through:
+˜K = H∗Wk + H∗AB
+(1)
+˜
+attn∗= (H∗Wq) ˜K
+√
+D
+(2)
+
+
+===== PAGE 4 =====
+
+AMG-LoRA
+SC
+SC
+SC
+SC
+Layer Norm
+Layer Norm
+Cross-modal Fusion
+Prediction Head
+Attention with AMG-LoRA
+Cross-modal Fusion
+MLP
+X-modal
+Output
+Softmax
+W𝑣𝑣
+𝐚𝐚෥𝐭𝐭𝐭𝐭𝐧𝐧rgb
+𝐚𝐚෥𝐭𝐭𝐭𝐭𝐧𝐧X
+𝐚𝐚𝐚𝐚𝐚𝐚𝐚𝐚X
+B
+A
+W𝑘𝑘
+W𝑞𝑞
+B
+A
+𝜔𝜔rgb
+Cross-modal Fusion
+HMoE
+Divide & Concat
+Divide & Concat
+SC
+SC
+...
+SC
+Learnable/Forzen Weights
+Template Token
+Candidate Token
+Mixed Candidate Token
+Mixed Template Token
+Skip Connection
+RGB-modal
+X-modal
+ViT Encoder
+Patch Embedding
+Figure 2. Overall pipeline of SEATrack. Input tokens from each modality are processed by stacked shared ViT encoders for intra-modal
+target matching and feature extraction. To enable cross-modal interaction, the proposed AMG-LoRA and HMoE are embedded into the ViT
+encoder every 2 layers to perform attention alignment and information fusion, respectively. AMG-LoRA’s mutual guidance mechanism is
+exemplified through the “RGB refines X” pathway (Eq. 4), with the reverse direction behaving similarly.
+where H∗denotes the concatenated tokens from arbitrary
+modality,
+˜
+attn∗is the corresponding unnormalized (be-
+fore softmax operation) matching attention map, and A ∈
+RD×r, B ∈Rr×D are low-rank matrices. During infer-
+ence, such low-rank matrices can be merged into the origi-
+nal weights for efficient computation.
+While domain adaptation of LoRA helps to enhance
+the matching attention maps, achieving alignment remains
+challenging because the target salience can differ signifi-
+cantly across modalities under different scene conditions [2,
+16]. Fig. 6 intuitively illustrates how the model’s ability to
+perceive targets in each modality shifts with scene varia-
+tions. This requires a dynamic and adaptive alignment pro-
+cess to avoid negative transfer, where an unreliable modal-
+ity may, in turn, misguide the reliable one.
+Inspired by
+Classifier-Free Guidance (CFG) [9], we tackle this chal-
+lenge by reformulating such alignment as a multi-branch
+trade-off problem. Specifically, we propose Adaptive Mu-
+tual Guidance (AMG) to dynamically refine and align the
+attention maps across modalities through a bidirectional
+learnable linear interpolation, formulated as:
+attnrgb =
+˜
+attnrgb + wX( ˜
+attnX −
+˜
+attnrgb)
+(3)
+attnX =
+˜
+attnX + wrgb( ˜
+attnrgb −
+˜
+attnX)
+(4)
+where wX and wrgb are learnable scaling factors to adapt to
+the dynamic challenge we discussed. During training, they
+are initialized to 1 for cross-guidance.
+Despite simplicity, AMG-LoRA offers valuable insight
+that cross-modal attention alignment is promising for break-
+ing the performance-efficiency dilemma. As presented in
+Tab. 2, it delivers substantial improvements (18.3%, 7.2%,
+and 6.1% PR gains on LasHeR, DepthTrack, and VisEvent,
+respectively) with only 0.14M parameters. Moreover, com-
+prehensive quantitative and qualitative evaluations confirm
+that AMG-LoRA is a well-targeted and effective design for
+multimodal tracking.
+3.3. HMoE for Cross-modal Fusion
+As discussed before, designing a cross-modal fusion strat-
+egy that balances expressiveness and efficiency is a long-
+standing challenge in multimodal tracking. In response to
+this, we propose Hierarchical MoE (HMoE), with the de-
+tails presented in Fig. 3. Distinct from existing MoE ex-
+plorations in tracking [1, 5, 37] that focus on expert-level
+ensemble learning for feature enhancement, HMoE is de-
+signed as an efficient global relation modeler. It allocates
+fine-grained sub-token mixtures to different expert heads
+and aggregates the resulting expert tokens into the final out-
+put through a hierarchical soft routing mechanism. Archi-
+
+
+===== PAGE 5 =====
+
+tecturally, HMoE is inserted after the Attention and FFN
+sub-layers, where it processes on either the template or can-
+didate token sequences to enable cross-modal fusion, as il-
+lustrated in Fig. 2.
+Let Xin ∈RN×D denote the input token sequence con-
+sisting of N tokens, each with D dimensions. As mentioned
+before, Xin can be either [zrgb; zX] or [crgb; cX]. For param-
+eter efficiency, HMoE uses low-rank linear layer as expert
+function and the e experts are defined as {fi : R
+D
+h →Rr →
+R
+D
+h }e
+i=1, with r ≪D
+h . In HMoE, each expert has h heads
+to process, each associated with a learnable D
+h -dimensional
+vector that measures the affinity between the input and the
+head, forming the learnable gating matrix Φ ∈R
+D
+h ×(e·h).
+The input Xin is first transformed by a low-rank linear
+layer. Each token of the output is then split into h sub-
+tokens, forming Xsplit ∈R(N·h)×( D
+h ), as formulated by:
+Xsplit = Fs(Xin)
+(5)
+where Fs is channel split operation.
+Guided by the gating matrix Φ, sub-tokens from Xsplit
+are mixed to generate head-level inputs Xmix ∈R(e·h)× D
+h
+for each expert. Subsequently, outputs from the same ex-
+pert are merged into expert-level tokens, followed by an-
+other low-rank linear layer to yield Yexpert ∈Re×D. This
+sub-token fusion process can be formulated as:
+Xmix = softmax(XsplitΦ, dim=0)TXsplit
+(6)
+Yi,j
+head = fi
+
+Xi,j
+mix
+
+, i ∈{1, . . . , e}, j ∈{1, . . . , h} (7)
+Yexpert = Fm(Yhead)
+(8)
+where Yhead ∈R(e·h)× D
+h is the head-level activations by
+experts and Fm denotes the channel concatenate operation.
+Token-level fusion, analogous to Eq. 6 but requires a
+token-to-expert affinity matrix for combining expert to-
+kens into final outputs. Note that each row of XsplitΦ ∈
+R(N·h)×(e·h) represents the affinities of a sub-token to all
+heads, and each column corresponds to the affinities of all
+sub-tokens to a single head, we can reconstruct the token-
+to-expert affinity matrix A ∈RN×e by aggregating non-
+overlapping h × h patches.
+Therefore, the final output
+Yout ∈RN×D can be obtained by:
+A = softmax (Fp(XsplitΦ), dim=1)
+(9)
+Yout = AYexpert
+(10)
+where Fp : R(N·h)×(e·h) →RN×e is patchify operation.
+Through hierarchical fusion progressing from the sub-token
+level (Eq. 6) to the token level (Eq. 9), target cues across
+modalities are effectively enriched.
+3.4. Prediction Head and Loss
+We inherit the head from the foundational tracker to locate
+the target within the candidate. The summation of crgb and
+…
+…
+…
+Token Fusion
+Sub-token Fusion
+𝚽𝚽
+ℱ𝑠𝑠
+Low-Rank Linear Layer
+ℱ𝑝𝑝
+…
+…
+c
+h7
+h8
+f4
+A
+B
+c
+h1
+h2
+f1
+𝐗𝐗𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠𝑠
+𝐗𝐗𝑖𝑖𝑖𝑖
+𝐘𝐘𝑒𝑒𝑒𝑒𝑒𝑒𝑒𝑒𝑒𝑒𝑡𝑡
+𝐘𝐘𝑜𝑜𝑜𝑜𝑜𝑜
+𝐗𝐗𝑚𝑚𝑚𝑚𝑚𝑚
+𝐄𝐄𝐪𝐪. (6)
+𝐄𝐄𝐪𝐪. (9)
+Figure 3. Architecture details of HMoE configured with e = 4
+experts, each containing h = 2 heads.
+cX is fed into the head. Then, three stacked Conv-BN-ReLU
+blocks are followed to generate the target center score map,
+center coordinate offset, and bounding box size, respec-
+tively. We adopt the same objective loss as the foundation
+tracker, given by:
+L = Lfocal + λiouLiou + λL1L1
+(11)
+where λiou = 2 and λL1 = 5 are the regularization factors.
+4. Experiment
+4.1. Implementation Details
+Follow common practice [3, 10, 11, 37, 43, 55], SEATrack
+builds upon the ViT-Base version of OSTrack [47] as the
+foundation tracker and is fine-tuned on two 4090 GPUs with
+a global batch size of 64 using PyTorch. SEATrack takes a
+128 × 128 template and a 256 × 256 search region as input,
+with training performed on LasHeR [25], DepthTrack [45],
+and VisEvent [42] for RGB-T, RGB-D, and RGB-E track-
+ing, respectively. We employ the AdamW optimizer with a
+weight decay of 10−4. The learning rate is set to 4 × 10−4
+for RGB-T and RGB-D, and 6 × 10−5 for RGB-E. The
+training is conducted for 60, 25, and 45 epochs on RGB-
+T, RGB-D, and RGB-E tracking, respectively. AMG-LoRA
+and HMoE are inserted into the ViT encoder every 2 layers
+with Xavier initialization, and only their parameters are up-
+dated during training while the foundation tracker remains
+frozen. Efficiency-related metrics are tested on RTX 4090,
+SEATrack runs 63.5 FPS with about 1GB of memory usage.
+4.2. Comparison with State-of-the-arts
+LasHeR.
+LasHeR [25] is the most popular high-diversity
+benchmark for RGB-T tracking that contains 245 test se-
+quences and 975 train sequences.The precision (PR), Nor-
+malized Precision Rate (NPR), and success (SR) metrics are
+used to evaluate tracking performance. As shown in Tab. 1,
+
+
+===== PAGE 6 =====
+
+Table 1. Main performance comparison across RGB-T, RGB-D, and RGB-E datasets. SEATrack delivers strong overall results on five
+benchmarks, with outstanding parameter efficiency. L.P. denotes Learnable Parameters. * indicates reproduced results.
+LasHeR
+RGBT234
+DepthTrack
+VOT-RGBD2022
+VisEvent
+Type
+Method
+Source
+PR↑
+NPR↑
+SR↑
+MPR↑
+MSR↑
+PR↑
+RE↑
+F-score↑
+EAO↑
+Acc.↑
+Rob.↑
+PR↑
+SR↑
+L.P.↓
+FPS↑
+FFT
+TBSI [20]
+CVPR’23
+69.2
+65.7
+55.6
+87.1
+63.7
+-
+-
+-
+-
+-
+-
+-
+-
+203M
+36.2
+IIMF [4]
+MM’24
+72.4
+68.4
+58.1
+86.8
+64.4
+-
+-
+-
+-
+-
+-
+-
+-
+182M
+-
+CAFormer [44]
+AAAI’25
+70.0
+66.1
+55.6
+88.3
+66.4
+-
+-
+-
+-
+-
+-
+-
+-
+-
+83.6
+DeT [45]
+CVPR’21
+-
+-
+-
+-
+-
+56.0
+50.6
+53.2
+65.7
+76.0
+84.5
+-
+-
+-
+-
+TABBTrack [49]
+PR’25
+-
+-
+-
+-
+-
+62.2
+61.5
+61.8
+72.2
+82.1
+87.4
+-
+-
+-
+27
+PHPTrack [41]
+TCSVT’25
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+77.8
+61.1
+93.7M
+21.5
+CMDTrack [53]
+TPAMI’25
+68.8
+-
+56.6
+85.9
+61.8
+59.1
+60.7
+59.8
+-
+-
+-
+75.8
+61.3
+31M
+67
+MamTrack [35]
+CVPR’25
+67.4
+-
+54.2
+84.4
+62.4
+-
+-
+-
+-
+-
+-
+79.2
+61.6
+-
+18.1
+SMSTrack [3]
+ICCV’25
+70.3
+-
+56.0
+86.9
+64.5
+64.1
+63.1
+63.6
+74.8
+82.2
+89.7
+76.3
+60.4
+98.2M*
+24.1
+PEFT
+ProTrack [46]
+MM’22
+53.8
+49.8
+42.0
+79.5
+59.9
+58.3
+57.3
+57.8
+65.1
+80.1
+80.2
+63.2
+47.1
+-
+-
+ViPT [55]
+CVPR’23
+65.1
+61.6
+52.5
+83.5
+61.7
+59.2
+59.6
+59.4
+72.1
+81.5
+87.1
+75.8
+59.2
+0.8M
+-
+VADT [50]
+ICASSP’24
+-
+-
+-
+-
+-
+60.3
+60.6
+61.0
+72.1
+81.6
+87.3
+-
+-
+-
+-
+TATrack [39]
+AAAI’24
+70.2
+66.7
+56.1
+87.2
+64.4
+-
+-
+-
+-
+-
+-
+-
+-
+-
+26.1
+BAT [2]
+AAAI’24
+70.2
+66.4
+56.3
+86.8
+64.1
+-
+-
+-
+-
+-
+-
+-
+-
+0.3M
+-
+eMoET [5]
+RAL’24
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+76.4
+61.3
+8.4M
+-
+UnTrack [43]
+CVPR’24
+64.6
+60.0
+51.3
+84.2
+62.5
+61.1
+60.8
+61.0
+72.1
+82.0
+86.9
+75.5
+58.9
+6.6M
+25.6
+OneTracker [10]
+CVPR’24
+67.2
+-
+53.8
+85.7
+64.2
+60.7
+60.4
+60.9
+72.7
+81.9
+87.2
+76.7
+60.8
+2.8M
+-
+SDSTrack [11]
+CVPR’24
+66.5
+62.6
+53.1
+84.8
+62.5
+61.9
+60.9
+61.4
+72.8
+81.2
+88.3
+76.7
+59.7
+14.8M
+20.8
+SNNPTrack [35]
+ICASSP’25
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+76.9
+59.8
+2.1M
+-
+M3Track [38]
+SPL’25
+65.8
+-
+52.5
+84.5
+63.0
+56.4
+58.5
+57.4
+-
+-
+-
+76.7
+59.6
+1.7M
+31.1
+XTrack [37]
+ICCV’25
+69.1
+65.5
+55.7
+87.4
+64.9
+61.8
+62.0
+61.5
+74.0
+82.1
+88.8
+77.5
+60.9
+5.4M*
+10.3*
+SEATrack
+Ours
+71.6
+67.5
+57.3
+87.8
+63.9
+62.9
+63.5
+63.2
+73.6
+82.1
+88.4
+77.1
+60.3
+0.6M
+63.5
+SEATrack outperforms all existing PEFT-based trackers
+and remains highly competitive compared to the FFT-based
+method IIMF [4], with only about 0.3% of its parameters.
+RGBT234.
+RGBT234 [24] is a large-scale RGB-T track-
+ing benchmark, which contains 234 videos.
+To reduce
+the influence of annotation-induced alignment errors [24],
+Maximum Precision Rate (MPR) and Maximum Success
+Rate (MSR) are adopted for evaluation rather than the con-
+ventional PR and SR metrics.
+Tab. 1 demonstrates that
+SEATrack outperforms all PEFT-based methods in MPR
+while achieving competitive results against FFT-based ap-
+proaches. Despite a 1% MSR gap relative to XTrack[37],
+SEATrack’s superior parameter efficiency (5.4M vs. 0.6M)
+renders it substantially more resource-friendly.
+DepthTrack.
+DepthTrack [45] is a large-scale long-term
+RGB-D tracking benchmark with 150 training and 50 test-
+ing video sequences. The metrics precision (PR) and recall
+(RE) are used to measure the accuracy and robustness of
+target localization. F-score, the primary measurement, is
+calculated by F = 2PR·RE
+PR+RE. As shown in Tab. 1, SEATrack
+consistently outperforms all PEFT-based trackers.
+VOT-RGBD2022.
+VOT-RGBD2022 [22] is the most re-
+cent benchmark for RGB-D tracking, which contains 127
+RGB-D video sequences.
+Expected Average Overlap
+(EAO), Accuracy, and Robustness are used to evaluate per-
+formance. As shown in Tab. 1, SEATrack surpasses SD-
+STrack [11] by 0.8% in EAO, 0.9% in Accuracy, and 0.1%
+in Robustness, with a clear advantage in efficiency.
+VisEvent.
+As the most representative benchmark for
+RGB-E tracking, VisEvent [42] contains 500 sequences for
+Table 2. Component-wise Ablation Studies.
+AMG-LoRA
+HMoE
+LasHeR
+DepthTrack
+VisEvent
+Param.
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+-
+-
+51.5
+41.2
+53.6
+52.2
+52.9
+69.5
+53.4
+0
+✓
+-
+69.8
+55.7
+58.1
+57.2
+57.6
+75.6
+59.1
+0.14M
+-
+✓
+67.4
+54.2
+60.9
+61.3
+61.1
+76.5
+59.9
+0.46M
+✓
+✓
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+0.6M
+training and 320 sequences for testing, both collected from
+real-world scenarios. Similar to the LasHeR [25], preci-
+sion (PR) and success (SR) are used to evaluate tracking
+performance. As shown in Tab. 1, SEATrack, as a unified
+approach, achieves performance comparable to the task-
+specific method [5]. More importantly, it is also competi-
+tive with FFT-based SOTA [3].
+4.3. Ablation and Discussion
+Component Analysis.
+As shown in Tab. 2, both compo-
+nents demonstrate significant improvements over the base-
+line across three tasks, with their combination achieving op-
+timal performance. The baseline is a two-stream variant of
+the frozen foundation tracker [47] without cross-modal in-
+teraction in the ViT encoders, and the two search regions are
+simply fused by element-wise addition before the predic-
+tion head. Notably, both AMG-LoRA and HMoE individ-
+ually outperform well-established methods [10, 11, 43, 55]
+on LasHeR, while maintaining competitive on DepthTrack
+and VisEvent. The results of AMG-LoRA, in particular,
+reveal the potential of cross-modal attention alignment for
+breaking the performance–efficiency dilemma.
+Initialization of the Scaling Factor.
+The learnable scal-
+ing factors wX (Eq. 3) and wrgb (Eq. 4) determine the bidi-
+
+
+===== PAGE 7 =====
+
+Table 3. Initialization Choices of AMG-LoRA’s Scaling Factor.
+wX & wrgb
+LasHeR
+DepthTrack
+VisEvent
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+0
+70.4
+56.2
+57.5
+57.6
+57.5
+75.9
+59.6
+0.5
+69.7
+55.7
+58.4
+59.5
+58.9
+76.8
+60.2
+1
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+NO
+ARC
+SV
+FM
+OV
+FL
+TC
+CM
+SA
+BC
+DEF
+LR
+AIV
+HI
+LI
+MB
+HO
+TO
+PO
+89.7
+86.8
+69.2
+66.1
+63.1
+65.2
+62.0
+60.2
+61.7
+62.6
+57.8
+61.5
+73.4
+74.0
+53.6
+55.2
+60.9
+62.5
+71.6
+73.3
+67.3
+71.1
+61.1
+63.7
+66.4 68.2
+61.2
+63.9
+60.3
+64.0
+70.0
+76.7
+67.3
+70.1
+68.7
+71.5
+63.0
+65.8
+Precison Rate with Different Attributes
+AMG-LoRA
+LI
+MB
+NO
+ARC
+SV
+FM
+OV
+FL
+TC
+CM
+SA
+BC
+DEF
+LR
+AIV
+HI
+HO
+TO
+PO
+70.4
+73.2
+55.2
+52.7
+51.5
+49.9
+54.8
+53.6
+49.7
+48.5
+49.1
+46.0
+58.1
+58.5
+47.9
+47.3 44.6
+46.2
+58.4
+59.6
+56.3
+53.5
+51.3
+49.0
+54.5
+52.8
+48.7
+51.0
+50.4
+47.3
+60.7
+66.2
+54.0
+56.4
+54.9
+57.3
+51.7
+53.8
+Success Rate with Different Attributes
+LoRA
+Figure 4. LoRA v.s. AMG-LoRA across 19 challenging attributes
+on LasHeR [25].
+rectional guidance strength of AMG-LoRA. In Tab. 3, we
+ablate three representative initialization strategies and an-
+alyze the impact on performance.
+As a stable starting
+point, 0-initialization makes the early stage of training de-
+grade into a no-guidance behavior, but the performance ap-
+pears to be unsatisfactory. Another intuitive choice is to
+treat both modalities equally, i.e., 0.5-initialization, but the
+performance under this prior is still not optimal. Benefit-
+ing from the cross-guidance induced by 1-initialization, the
+RGB branch’s matching responses provide a strong prior
+for X-modal representation learning, yielding the best per-
+formance across all three tasks.
+Deeper Analysis of AMG-LoRA.
+To investigate how
+AMG-LoRA performs in complex conditions, we adopt
+LoRA [13] as the baseline and evaluate both methods across
+19 challenging attributes from the LasHeR [25]. As shown
+in Fig. 4, AMG-LoRA achieves non-trivial improvements
+over LoRA across nearly all attributes. For general scenar-
+ios such as Similar Appearance (SA), Background Clutter
+(BC), and Fast Motion (FM), AMG-LoRA achieves PR–SR
+gains of 2.6–2.3%, 3.8–2.8%, and 2.8–2.4%, respectively,
+highlighting its contribution to real-world robustness. More
+notably, for Out-of-View (OV) and Frame-Loss (FL) sce-
+narios where certain modalities are unavailable and thus
+contradict our design assumption, AMG-LoRA surprisingly
+outperforms LoRA in both PR (by 6.7 and 3.7 points) and
+SR (by 5.5 and 3.1 points). Combined with the results in
+Fig. 5, which serves as an example of FL, we believe such
+improvement can be attributed to the benefits of alignment.
+Number of Heads in HMoE.
+The number of heads per
+expert determines the sub-token dimensionality. As shown
+in Tab. 4, using 2 heads per expert achieves optimal perfor-
+mance. With only 1 head per expert, HMoE’s hierarchical
+Table 4. Different Numbers of Heads per Expert in HMoE.
+Heads
+Dim.
+Param.
+LasHeR
+DepthTrack
+VisEvent
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+1
+768
+0.9M
+69.7
+55.8
+58.1
+59.7
+58.9
+76.7
+60.2
+2
+384
+0.6M
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+4
+192
+0.5M
+70.6
+56.4
+60.7
+58.5
+59.6
+76.6
+59.9
+8
+96
+0.4M
+70.6
+56.5
+61.0
+61.7.
+61.3
+76.3
+59.7
+Table 5. Different Numbers of Experts in HMoE.
+Attn.
+FFN.
+Param.
+LasHeR
+DepthTrack
+VisEvent
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+4
+4
+0.5M
+70.3
+56.0
+60.9
+61.6
+61.2
+76.8
+60.2
+8
+4
+0.6M
+70.7
+56.6
+59.7
+60.0
+59.8
+76.6
+59.9
+4
+8
+0.6M
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+8
+16
+0.9M
+70.9
+56.7
+59.3
+59.0
+59.1
+76.1
+59.7
+Timeline
+#46
+#186
+#907
+(a)
+(b)
+(c)
+(d)
+Figure 5. LoRA (left) vs. AMG-LoRA (right) under a modality-
+missing scenario. (a) Missing RGB frame. (b) RGB attention map.
+(c) Thermal frame. (d) Thermal attention map.
+fusion degrades to token-level fusion [29], where the large
+latent space with noise may lead to poor performance. Con-
+tinuously increasing the number of heads is also harmful,
+as the over-splitting disrupts the original semantic informa-
+tion.
+Number of Experts in HMoE.
+The number of experts
+is another critical hyperparameter in HMoE, as it directly
+determines both the model’s capacity and parameter size.
+Tab. 5 demonstrates that prioritizing expert budget to FFN
+layers over attention layers yields optimal performance
+across all three tasks, consistent with observations in [8].
+Furthermore, excessively increasing the number of experts
+under limited data conditions leads to overfitting and subse-
+quent performance degradation.
+Comparison with Different Fusion Strategies.
+To val-
+idate HMoE’s design philosophy of balancing expressive-
+ness and efficiency, we compare it with two representative
+methods: cross-attention (expressiveness-oriented through
+global fusion) and MCP [55] (efficiency-oriented through
+local fusion). Both follow HMoE’s template-to-template
+and candidate-to-candidate fusion strategy and identical in-
+
+
+===== PAGE 8 =====
+
+Pre-train
+LoRA
+AMG-LoRA
+GT
+RGB
+T
+Case 1: Mutual Refinement
+GT
+RGB
+E
+Case 3: RGB Refines X
+GT
+RGB
+D
+Case 2: X Refines RGB
+Figure 6. Comprehensive visualization of AMG-LoRA’s adaptability. The results of “Pre-train” row are directly inferred from the frozen
+foundation tracker [47].
+Table 6. Comparison of Different Fusion Strategies.
+Variants
+LasHeR
+DepthTrack
+VisEvent
+MACs (109)
+FPS
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+Crs Attn
+67.6
+54.4
+61.2
+61.4
+61.3
+75.8
+59.3
+56.4
+41.5
++AMG-LoRA
+69.9
+55.7
+62.7
+60.4
+61.5
+76.4
+59.9
+56.4
+41.2
+MCP
+68.4
+54.9
+60.1
+59.2
+59.6
+75.6
+59.3
+56.5
+54.7
++AMG-LoRA
+70.3
+56.1
+61.2
+60.7
+61.0
+75.9
+59.5
+56.5
+54.2
+HMoE
+67.4
+54.2
+60.9
+61.3
+61.1
+76.5
+59.9
+56.4
+63.8
++AMG-LoRA
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+56.4
+63.5
+sertion positions, while we extend them to support bidi-
+rectional fusion.
+As shown in Tab. 6, HMoE achieves
+very comparable performance over the cross-attention while
+achieving about 35% speed-up in FPS. The extended bidi-
+rectional MCP surprisingly leads to LasHeR, yet it sacri-
+fices efficiency due to the multi-turn operations required. In
+contrast, HMoE enjoys high efficiency owing to its inher-
+ent global receptive field. Moreover, AMG-LoRA boosts
+all three fusion strategies across most metrics while intro-
+ducing negligible additional latency, demonstrating its good
+generalization. In particular, combining AMG-LoRA with
+HMoE yields both optimal performance and efficiency, pro-
+viding compelling justification for our design choice.
+Visualization Analysis.
+AMG-LoRA is designed to han-
+dle modality reliability variations in tracking. Although wX
+(Eq. 3) and wrgb (Eq. 4) remain fixed during inference, the
+results exhibit interesting adaptivity. Fig. 6 provides intu-
+itive evidence of its effect, where the “Pre-train” row de-
+notes attention maps directly inferred from the foundation
+tracker. Rather than being misled by the less reliable modal-
+ity (i.e., negative transfer), AMG-LoRA facilitates mutual
+refinement, producing clean and well-aligned matching re-
+sponses in the RGB-T task (Case 1). Cases 2 and 3 fur-
+ther demonstrate that such alignment is conditioned on the
+correct branch. Fig. 7 further provides a prediction-level
+comparison with well-established trackers. All three cases
+#382
+#211
+#190
+GT
+SEATrack
+SDSTrack
+ViPT
+#103
+#154
+#228
+#775
+#796
+#947
+RGB-T
+RGB-E
+RGB-D
+Figure 7. Prediction-level comparison of SEATrack with two well-
+established PEFT-based multimodal trackers.
+involve similar-appearance scenarios, a common challenge
+in real-world applications. Whereas existing methods are
+easily misled and yield incorrect predictions, SEATrack re-
+mains accurate across all cases, which we attribute to the
+“denoising” capability of AMG-LoRA.
+5. Conclusion
+In this work, we revisit the limitations of existing PEFT
+multimodal tracking methods and present SEATrack to ad-
+dress the performance–efficiency dilemma. Rather than fo-
+cusing solely on cross-modal fusion, it adopts an alignment-
+before-fusion design. Extensive evaluations across multiple
+tasks demonstrate that this principle contributes to the sim-
+plicity and effectiveness of SEATrack.
+Limitation. While effective, SEATrack underperforms
+on certain metrics. The input-dependent alignment mecha-
+nisms may further improve robustness. Moreover, explor-
+ing how to align spatially heterogeneous modalities, such
+as vision and language, in the tracking context remains an
+interesting direction for future work.
+
+
+===== PAGE 9 =====
+
+Acknowledgement.
+The authors thank the reviewers
+and ACs for their tremendous efforts and helpful com-
+ments.
+This work is partially supported by the Natural
+Science Foundation of China (No.
+62476235 and No.
+62503323); the Hebei Natural Science Foundation (No.
+F2023203012); and the Innovation Capability Improve-
+ment Plan Project of Hebei Province (No. 22567626H).
+References
+[1] Wenrui Cai, Qingjie Liu, and Yunhong Wang.
+Spmtrack:
+Spatio-temporal parameter-efficient fine-tuning with mixture
+of experts for scalable visual tracking. In Proceedings of the
+Computer Vision and Pattern Recognition Conference, pages
+16871–16881, 2025. 2, 4
+[2] Bing Cao, Junliang Guo, Pengfei Zhu, and Qinghua Hu. Bi-
+directional adapter for multimodal tracking. In Proceedings
+of the AAAI Conference on Artificial Intelligence, pages 927–
+935, 2024. 2, 3, 4, 6
+[3] Sixian Chan, Zedong Li, Wenhao Li, Shijian Lu, Chunhua
+Shen, and Xiaoqin Zhang. Smstracker: Tri-path score mask
+sigma fusion for multi-modal tracking. In Proceedings of
+the IEEE/CVF International Conference on Computer Vi-
+sion, pages 4766–4775, 2025. 5, 6
+[4] Liqiu Chen, Yuqing Huang, Hengyu Li, Zikun Zhou,
+and Zhenyu He.
+Simplifying cross-modal interaction via
+modality-shared features for rgbt tracking. In Proceedings
+of the 32nd ACM International Conference on Multimedia,
+pages 1573–1582, 2024. 2, 6
+[5] Yucheng Chen and Lin Wang. emoe-tracker: Environmental
+moe-based transformer for robust event-guided object track-
+ing, 2024. 2, 4, 6
+[6] Shenyuan Gao, Chunluan Zhou, and Jun Zhang. Generalized
+relation modeling for transformer tracking. In Proceedings of
+the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition, pages 18686–18695, 2023. 2
+[7] Yuan Gao, Chenglong Li, Yabin Zhu, Jin Tang, Tao He, and
+Futian Wang. Deep adaptive fusion network for high perfor-
+mance rgbt tracking. In Proceedings of the IEEE/CVF In-
+ternational conference on computer vision workshops, pages
+0–0, 2019. 2
+[8] Junxian He, Chunting Zhou, Xuezhe Ma, Taylor Berg-
+Kirkpatrick, and Graham Neubig. Towards a unified view
+of parameter-efficient transfer learning.
+arXiv preprint
+arXiv:2110.04366, 2021. 1, 3, 7
+[9] Jonathan Ho and Tim Salimans.
+Classifier-free diffusion
+guidance. arXiv preprint arXiv:2207.12598, 2022. 2, 4
+[10] Lingyi Hong, Shilin Yan, Renrui Zhang, Wanyun Li, Xinyu
+Zhou, Pinxue Guo, Kaixun Jiang, Yiting Chen, Jinglun Li,
+Zhaoyu Chen, et al.
+Onetracker: Unifying visual object
+tracking with foundation models and efficient tuning. In Pro-
+ceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition, pages 19079–19091, 2024. 2, 3, 5,
+6
+[11] Xiaojun Hou, Jiazheng Xing, Yijie Qian, Yaowei Guo, Shuo
+Xin, Junhao Chen, Kai Tang, Mengmeng Wang, Zhengkai
+Jiang, Liang Liu, et al. Sdstrack: Self-distillation symmetric
+adapter learning for multi-modal visual object tracking. In
+Proceedings of the IEEE/CVF Conference on Computer Vi-
+sion and Pattern Recognition, pages 26551–26561, 2024. 1,
+2, 3, 5, 6
+[12] Neil Houlsby, Andrei Giurgiu, Stanislaw Jastrzebski, Bruna
+Morrone, Quentin De Laroussilhe, Andrea Gesmundo, Mona
+Attariyan, and Sylvain Gelly.
+Parameter-efficient transfer
+learning for nlp.
+In International conference on machine
+learning, pages 2790–2799. PMLR, 2019. 3
+[13] Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-
+Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen, et al.
+Lora: Low-rank adaptation of large language models. ICLR,
+1(2):3, 2022. 3, 7, 1, 2
+[14] Xiantao Hu, Bineng Zhong, Qihua Liang, Shengping Zhang,
+Ning Li, Xianxian Li, and Rongrong Ji. Transformer track-
+ing via frequency fusion. IEEE Transactions on Circuits and
+Systems for Video Technology, 34(2):1020–1031, 2023. 3
+[15] Xiantao Hu, Bineng Zhong, Qihua Liang, Shengping Zhang,
+Ning Li, and Xianxian Li. Toward modalities correlation for
+rgb-t tracking. IEEE Transactions on Circuits and Systems
+for Video Technology, 34(10):9102–9111, 2024. 3
+[16] Xiantao Hu, Bineng Zhong, Qihua Liang, Shengping Zhang,
+Ning Li, and Xianxian Li. Towards modalities correlation for
+rgb-t tracking. IEEE Transactions on Circuits and Systems
+for Video Technology, 2024. 2, 4
+[17] Xiantao Hu, Ying Tai, Xu Zhao, Chen Zhao, Zhenyu Zhang,
+Jun Li, Bineng Zhong, and Jian Yang. Exploiting multimodal
+spatial-temporal patterns for video object tracking. In Pro-
+ceedings of the AAAI Conference on Artificial Intelligence,
+pages 3581–3589, 2025. 2, 3
+[18] Xiantao Hu, Bineng Zhong, Qihua Liang, Liangtao Shi,
+Zhiyi Mo, Ying Tai, and Jian Yang.
+Adaptive perception
+for unified visual multi-modal object tracking. IEEE Trans-
+actions on Artificial Intelligence, 2025. 3
+[19] Siteng Huang, Biao Gong, Yulin Pan, Jianwen Jiang, Yiliang
+Lv, Yuyuan Li, and Donglin Wang.
+Vop: Text-video co-
+operative prompt tuning for cross-modal retrieval. In Pro-
+ceedings of the IEEE/CVF conference on computer vision
+and pattern recognition, pages 6565–6574, 2023. 1, 3
+[20] Tianrui Hui, Zizheng Xun, Fengguang Peng, Junshi Huang,
+Xiaoming Wei, Xiaolin Wei, Jiao Dai, Jizhong Han, and Si
+Liu.
+Bridging search region interaction with template for
+rgb-t tracking. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition, pages 13630–
+13639, 2023. 2, 3, 6
+[21] Menglin Jia, Luming Tang, Bor-Chun Chen, Claire Cardie,
+Serge Belongie, Bharath Hariharan, and Ser-Nam Lim. Vi-
+sual prompt tuning. In European conference on computer
+vision, pages 709–727. Springer, 2022. 1, 3
+[22] Matej Kristan, Aleˇs Leonardis, Jiˇr´ı Matas, Michael Felsberg,
+Roman Pflugfelder, Joni-Kristian K¨am¨ar¨ainen, Hyung Jin
+Chang, Martin Danelljan, Luka ˇCehovin Zajc, Alan Lukeˇziˇc,
+et al. The tenth visual object tracking vot2022 challenge re-
+sults. In European Conference on Computer Vision, pages
+431–460. Springer, 2022. 6
+[23] Brian Lester, Rami Al-Rfou, and Noah Constant. The power
+of scale for parameter-efficient prompt tuning, 2021. 3
+
+
+===== PAGE 10 =====
+
+[24] Chenglong Li, Xinyan Liang, Yijuan Lu, Nan Zhao, and Jin
+Tang. Rgb-t object tracking: Benchmark and baseline. Pat-
+tern Recognition, 96:106977, 2019. 2, 6
+[25] Chenglong Li, Wanlin Xue, Yaqing Jia, Zhichen Qu, Bin
+Luo, Jin Tang, and Dengdi Sun. Lasher: A large-scale high-
+diversity benchmark for rgbt tracking. IEEE Transactions on
+Image Processing, 31:392–404, 2021. 2, 5, 6, 7, 1
+[26] Hao Li, Yuhao Wang, Xiantao Hu, Wenning Hao, Pingping
+Zhang, Dong Wang, and Huchuan Lu. Cadtrack: Learning
+contextual aggregation with deformable alignment for robust
+rgbt tracking. arXiv preprint arXiv:2511.17967, 2025. 3
+[27] Junnan Li, Dongxu Li, Caiming Xiong, and Steven Hoi.
+Blip: Bootstrapping language-image pre-training for unified
+vision-language understanding and generation. In Interna-
+tional conference on machine learning, pages 12888–12900.
+PMLR, 2022. 3
+[28] Liting Lin, Heng Fan, Zhipeng Zhang, Yaowei Wang, Yong
+Xu, and Haibin Ling. Tracking meets lora: Faster training,
+larger model, stronger performance. In European Confer-
+ence on Computer Vision, pages 300–318. Springer, 2024.
+2
+[29] Joan Puigcerver, Carlos Riquelme, Basil Mustafa, and Neil
+Houlsby. From sparse to soft mixtures of experts, 2024. 7
+[30] Yanlin Qian, Song Yan, Alan Lukeˇziˇc, Matej Kristan, Joni-
+Kristian K¨am¨ar¨ainen, and Jiˇr´ı Matas. Dal: A deep depth-
+aware long-term tracker.
+In 2020 25th International con-
+ference on pattern recognition (ICPR), pages 7825–7832.
+IEEE, 2021. 2
+[31] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning
+transferable visual models from natural language supervi-
+sion. In International conference on machine learning, pages
+8748–8763. PmLR, 2021. 3
+[32] Liangtao Shi, Bineng Zhong, Qihua Liang, Ning Li, Sheng-
+ping Zhang, and Xianxian Li. Explicit visual prompts for
+visual object tracking. In Proceedings of the AAAI confer-
+ence on artificial intelligence, pages 4838–4846, 2024. 2
+[33] Liangtao Shi, Ting Liu, Xiantao Hu, Yue Hu, Quanjun Yin,
+and Richang Hong. Swimvg: Step-wise multimodal fusion
+and adaption for visual grounding. IEEE Transactions on
+Multimedia, 2025. 3
+[34] Liangtao Shi, Bineng Zhong, Qihua Liang, Xiantao Hu,
+Zhiyi Mo, and Shuxiang Song.
+Mamba adapter:
+Effi-
+cient multi-modal fusion for vision-language tracking. IEEE
+Transactions on Circuits and Systems for Video Technology,
+2025. 3
+[35] Chuanyu Sun, Jiqing Zhang, Yang Wang, Huilin Ge,
+Qianchen Xia, Baocai Yin, and Xin Yang. Exploring his-
+torical information for rgbe visual tracking with mamba. In
+Proceedings of the Computer Vision and Pattern Recognition
+Conference, pages 6500–6509, 2025. 6
+[36] Yuedong Tan, Zongwei Wu, Yuqian Fu, Zhuyun Zhou,
+Guolei Sun, Eduard Zamfi, Chao Ma, Danda Pani Paudel,
+Luc Van Gool, and Radu Timofte. Xtrack: Multimodal train-
+ing boosts rgb-x video object trackers, 2024. 2, 3
+[37] Yuedong Tan, Zongwei Wu, Yuqian Fu, Zhuyun Zhou,
+Guolei Sun, Eduard Zamfir, Chao Ma, Danda Paudel, Luc
+Van Gool, and Radu Timofte. Xtrack: Multimodal training
+boosts rgb-x video object trackers.
+In Proceedings of the
+IEEE/CVF International Conference on Computer Vision,
+pages 5734–5744, 2025. 2, 3, 4, 5, 6
+[38] Zhangyong Tang, Tianyang Xu, Xiao-Jun Wu, and Josef Kit-
+tler. M 3 track: Meta-prompt for multi-modal tracking. IEEE
+Signal Processing Letters, 2025. 6
+[39] Hongyu Wang, Xiaotao Liu, Yifan Li, Meng Sun, Dian Yuan,
+and Jing Liu. Temporal adaptive rgbt tracking with modality
+prompt. In Proceedings of the AAAI Conference on Artificial
+Intelligence, pages 5436–5444, 2024. 6
+[40] Hanshi Wang, Jin Gao, Weiming Hu, and Zhipeng Zhang.
+Mambafusion: Height-fidelity dense global fusion for multi-
+modal 3d object detection, 2025. 3
+[41] Mianzhao Wang, Fan Shi, Xu Cheng, and Shengyong Chen.
+Prior knowledge-driven hybrid prompter learning for rgb-
+event tracking. IEEE Transactions on Circuits and Systems
+for Video Technology, 2025. 6
+[42] Xiao Wang, Jianing Li, Lin Zhu, Zhipeng Zhang, Zhe Chen,
+Xin Li, Yaowei Wang, Yonghong Tian, and Feng Wu. Vi-
+sevent: Reliable object tracking via collaboration of frame
+and event flows. IEEE Transactions on Cybernetics, 54(3):
+1997–2010, 2023. 5, 6, 1
+[43] Zongwei Wu, Jilai Zheng, Xiangxuan Ren, Florin-Alexandru
+Vasluianu, Chao Ma, Danda Pani Paudel, Luc Van Gool, and
+Radu Timofte. Single-model and any-modality for video ob-
+ject tracking. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition, pages 19156–
+19166, 2024. 2, 3, 5, 6
+[44] Yun Xiao, Jiacong Zhao, Andong Lu, Chenglong Li, Bing
+Yin, Yin Lin, and Cong Liu.
+Cross-modulated atten-
+tion transformer for rgbt tracking.
+In Proceedings of the
+AAAI Conference on Artificial Intelligence, pages 8682–
+8690, 2025. 2, 3, 6
+[45] Song Yan, Jinyu Yang, Jani K¨apyl¨a, Feng Zheng, Aleˇs
+Leonardis, and Joni-Kristian K¨am¨ar¨ainen. Depthtrack: Un-
+veiling the power of rgbd tracking. In Proceedings of the
+IEEE/CVF International Conference on Computer Vision,
+pages 10725–10733, 2021. 2, 3, 5, 6, 1
+[46] Jinyu Yang, Zhe Li, Feng Zheng, Ales Leonardis, and
+Jingkuan Song. Prompting for multi-modal tracking. In Pro-
+ceedings of the 30th ACM international conference on mul-
+timedia, pages 3492–3500, 2022. 3, 6
+[47] Botao Ye, Hong Chang, Bingpeng Ma, Shiguang Shan, and
+Xilin Chen. Joint feature learning and relation modeling for
+tracking: A one-stream framework. In European Conference
+on Computer Vision, pages 341–357. Springer, 2022. 2, 3, 5,
+6, 8
+[48] Junbo Yin, Jianbing Shen, Runnan Chen, Wei Li, Ruigang
+Yang, Pascal Frossard, and Wenguan Wang.
+Is-fusion:
+Instance-scene collaborative fusion for multimodal 3d ob-
+ject detection. In Proceedings of the IEEE/CVF conference
+on computer vision and pattern recognition, pages 14905–
+14915, 2024. 3
+[49] Ge Ying, Dawei Zhang, Zhou Ou, Xiao Wang, and Zhon-
+glong Zheng. Temporal adaptive bidirectional bridging for
+rgb-d tracking. Pattern Recognition, 158:111053, 2025. 6
+
+
+===== PAGE 11 =====
+
+[50] Guangtong Zhang, Qihua Liang, Zhiyi Mo, Ning Li, and Bi-
+neng Zhong.
+Visual adapt for rgbd tracking.
+In ICASSP
+2024-2024 IEEE International Conference on Acoustics,
+Speech and Signal Processing (ICASSP), pages 9391–9395.
+IEEE, 2024. 6
+[51] Pengyu Zhang, Jie Zhao, Chunjuan Bo, Dong Wang,
+Huchuan Lu, and Xiaoyun Yang. Jointly modeling motion
+and appearance cues for robust rgb-t tracking. IEEE Trans-
+actions on Image Processing, 30:3335–3347, 2021. 2
+[52] Tianlu Zhang, Xiaoyi He, Qiang Jiao, Qiang Zhang, and Jun-
+gong Han. Amnet: Learning to align multi-modality for rgb-
+t tracking. IEEE Transactions on Circuits and Systems for
+Video Technology, 34(8):7386–7400, 2024. 3
+[53] Tianlu Zhang, Qiang Zhang, Kurt Debattista, and Jungong
+Han. Cross-modality distillation for multi-modal tracking.
+IEEE Transactions on Pattern Analysis and Machine Intelli-
+gence, 2025. 6
+[54] Yaozong Zheng, Bineng Zhong, Qihua Liang, Zhiyi Mo,
+Shengping Zhang, and Xianxian Li. Odtrack: Online dense
+temporal token learning for visual tracking.
+In Proceed-
+ings of the AAAI conference on artificial intelligence, pages
+7588–7596, 2024. 2
+[55] Jiawen Zhu, Simiao Lai, Xin Chen, Dong Wang, and
+Huchuan Lu. Visual prompt multi-modal tracking. In Pro-
+ceedings of the IEEE/CVF conference on computer vision
+and pattern recognition, pages 9516–9526, 2023. 1, 2, 3, 5,
+6, 7
+
+
+===== PAGE 12 =====
+
+SEATrack: Simple, Efficient, and Adaptive Multimodal Tracker
+Supplementary Material
+6. Overall
+In this supplementary material, we provide more explo-
+ration and analyses of the proposed Adaptive Mutual Guid-
+ance Low-Rank Adaptation (AMG-LoRA) and Hierarchical
+Mixture of Experts (HMoE), which are difficult to describe
+in the main paper due to space limitations. Specifically, the
+content of the supplementary material is organized below:
+• The rank choices of AMG-LoRA and HMoE;
+• Types of Adaptation Weights in AMG-LoRA;
+• Statistical Results of Alignment;
+• More Visualizations;
+• Complexity Analysis of HMoE;
+• Mechanism Behind Adaptive Alignment.
+6.1. Rank Choices of AMG-LoRA and HMoE
+Low-rank approximation facilitates the parameter efficiency
+of AMG-LoRA and HMoE. Tab. 7 systematically ablates
+different rank choices within each component to identify
+the most effective configuration.
+AMG-LoRA:
+Tab. 10(a) shows that setting r = 8 for
+AMG-LoRA achieves the best performance across all three
+tasks, which is consistent with the findings of [13]. In con-
+trast, smaller or larger rank choices lead to under-adaptation
+and over-adaptation of the pretrained knowledge, respec-
+tively, resulting in suboptimal performance.
+Table 7. Rank Choices of AMG-LoRA and HMoE.
+(a) AMG-LoRA
+r
+LasHeR
+DepthTrack
+VisEvent
+Param.
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+4
+69.9
+56.0
+58.7
+59.2
+59.0
+76.2
+59.7
+0.5M
+8
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+0.6M
+16
+70.3
+56.1
+60.4
+60.8
+60.6
+76.7
+60.2
+0.8M
+(b) HMoE
+r
+LasHeR
+DepthTrack
+VisEvent
+Param.
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+4
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+0.6M
+8
+69.7
+55.9
+60.4
+59.5
+60.0
+76.2
+59.9
+1M
+16
+69.0
+55.2
+58.2
+58.2
+58.2
+76.2
+59.8
+1.7M
+HMoE:
+Unlike AMG-LoRA, which focuses on adapt-
+ing pretrained knowledge, the low-rank approximation in
+HMoE aims to learn effective multimodal relation model-
+ing in a parameter-efficient manner. Tab. 10(b) indicates
+that r = 4 is sufficient given the current data size (0.51M,
+0.22M, and 0.21M frame pairs for LasHeR [25], Depth-
+Track [45], and VisEvent [42], respectively). Increasing the
+rank to further expand the model capacity instead leads to
+degraded performance, likely due to overfitting.
+Table 8. Types of Adaptation Weights in AMG-LoRA
+Weight Type
+LasHeR
+DepthTrack
+VisEvent
+PR
+SR
+PR
+RE
+F-score
+PR
+SR
+W[q,k]
+69.8
+56.1
+56.8
+56.4
+56.6
+75.8
+59.4
+W[q,v]
+71.3
+56.8
+60.3
+59.6
+60.0
+76.0
+59.4
+W[k,v]
+71.6
+57.3
+62.9
+63.5
+63.2
+77.1
+60.3
+6.2. Types of Adaptation Weights in AMG-LoRA
+In Sec. 3.2, we leverage LoRA [13] to adapt the [Wk, Wv]
+in the attention layer, which differs from the original setting
+that adapts [Wq, Wv]. Tab. 8 provides empirical evidence
+supporting this choice. It can be inferred that adapting Wv
+is crucial for cross-modal alignment, and combining it with
+Wk instead of Wq yields better performance and general-
+ization across the three tasks.
+Table 9. Statistical results of alignment. Cos denotes cosine simi-
+larity, and SKL denotes symmetric KL divergence (scaled by 104
+for clarity).
+Method
+LasHeR
+DepthTrack
+VisEvent
+Cos(↑)
+SKL(↓)
+Cos(↑)
+SKL(↓)
+Cos(↑)
+SKL(↓)
+LoRA
+0.51
+0.99
+0.44
+1.2
+0.51
+0.92
+AMG-LoRA
+0.99
+0.04
+0.97
+0.09
+0.91
+0.16
+6.3. Statistical Results of Alignment
+Fig. 4 demonstrates the benefits of alignment for mul-
+timodal tracking by showing AMG-LoRA’s performance
+gains over LoRA across challenging attributes. While Fig. 5
+and Fig. 6 provide intuitive qualitative evidence of AMG-
+LoRA’s adaptive refinement capability. Here, we provide
+a purely quantitative assessment of the alignment improve-
+ments achieved by AMG-LoRA.
+Specifically, we randomly sample 300 frames per task
+for inference and measure alignment by computing the sim-
+ilarity between the attention maps (matching responses).
+With cosine similarity for unnormalized attention maps
+(pre-softmax) and symmetric KL divergence for normalized
+attention maps (post-softmax).
+We aggregate the layer-wise results and report their av-
+erage in Tab. 9. AMG-LoRA clearly drives the attention
+maps across modalities toward near identity, strongly vali-
+dating the motivation for alignment.
+
+
+===== PAGE 13 =====
+
+(a)
+(b)
+(c)
+(d)
+(e)
+(f)
+Figure 8. Additional visualizations of the adaptability of AMG-LoRA under diverse real-world scenarios. For each case, the columns
+present the ground-truth target region (left), the corresponding RGB branch attention map (middle), and the corresponding X-modal
+attention map (right). While the rows correspond to the outputs of the Foundation model [47], LoRA [13], and the proposed AMG-LoRA.
+6.4. More Visualization
+Fig. 8 provides additional cases, including both indoor and
+outdoor real-world scenarios, further illustrating the adapt-
+ability of AMG-LoRA. By dynamically refining the less re-
+liable matching response (attention map) instead of negative
+transferring, it demonstrates strong potential for all-time,
+all-weather tracking.
+6.5. Complexity Analysis of HMoE
+For HMoE, the main computational overhead comes from
+Eqs. 6, 7, 9, 10; with the softmax in Eq. 6 being the dom-
+inant term at O(Neh2). Since the number of heads h is
+a small constant and much smaller than the number of to-
+kens N, i.e. h ≪N, HMoE is therefore more efficient than
+attention with O(N 2D) complexity.
+Following the configurations in Tab.4 and Tab. 5, we fur-
+ther investigate the efficiency of HMoE under varying num-
+bers of heads and experts, where MACs are measured using
+Table 10. Efficiency under Different HMoE Configurations.
+(a) Heads
+Heads
+MACs (109)
+FPS
+1
+56.466
+63.7
+2
+56.466
+63.5
+4
+56.466
+62.4
+8
+56.466
+62.0
+(b) Experts
+Attn.
+FFN.
+MACs (109)
+FPS
+4
+4
+56.466
+64.1
+8
+4
+56.466
+63.5
+4
+8
+56.466
+63.5
+8
+16
+56.466
+62.4
+the THOP package. As shown in Tab. 10(a), increasing the
+number of heads h from 1 to 8 introduces only negligible
+computational overhead at the G-level, while the FPS vari-
+ations remain within the margin of error. Tab.10(b) further
+shows that increasing the number of experts e is also largely
+insensitive to efficiency, which makes it possible to scale the
+model without introducing additional latency. These obser-
+vations are consistent with the theoretical complexity anal-
+ysis mentioned above.
+
+
+===== PAGE 14 =====
+
+L2
+L6
+L10
+L12
+Output
+(b) LoRA
+(c) AMG-LoRA (Ours)
+(a)
+Figure 9. (a): the learned scalars across layers. (b) and (c): layer-
+wise attention maps (top: RGB; bottom: Thermal).
+6.6. Mechanism Behind Adaptive Alignment
+To investigate the mechanism behind the adaptive alignment
+behavior of AMG-LoRA shown in Fig. 5 and Fig. 6, we
+first analyze the layer-wise distributions of the two learn-
+able scaling factors, wrgb and wX, learned on the LasHeR
+dataset. As illustrated in Fig. 9(a), the guidance strength
+of wrgb is higher than that of wX in most layers, indicat-
+ing that, in RGB-T scenarios, the RGB modality generally
+provides more reliable target responses. Meanwhile, wX
+remains positive throughout all layers, suggesting that the
+thermal branch also contributes useful complementary in-
+formation during alignment. This indicates that the pro-
+posed mutual guidance mechanism does not rigidly favor
+one branch; instead, it learns a collaborative pattern during
+training, in which the more reliable branch takes the leading
+role while the other serves as complementary support.
+To better understand the behavior of AMG-LoRA un-
+der frame loss, we take frame #46 in Fig. 5 as an example
+and compare its layer-wise attention maps with those of the
+baseline (LoRA), as shown in Fig. 9(b) and (c). In contrast
+to the consistently dispersed patterns produced by LoRA,
+our AMG-LoRA enables the impaired RGB branch to grad-
+ually refine its target perception in deeper layers, thereby
+laying the foundation for accurate final alignment. We at-
+tribute this behavior to the effective gradients introduced
+by the proposed Adaptive Mutual Guidance (AMG), which
+help the pretrained knowledge learn how to align correctly
+during training.

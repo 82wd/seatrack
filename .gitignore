@@ -1,0 +1,31 @@
+# ---- 数据集 / 下载缓存（体积大，不入库）----
+datasets/
+downloads/
+
+# ---- 权重与训练产物 ----
+*.pth.tar
+*.pth
+models/checkpoints/
+models/logs/
+tensorboard/
+output/
+
+# ---- 评测中间产物 ----
+SEATrack-main/RGBT_workspace/*/
+SEATrack-main/RGBE_workspace/*/
+SEATrack-main/*_workspace/results/
+SEATrack-main/*_workspace/sequences/
+SEATrack-main/*_workspace/analysis/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+
+# ---- 编辑器 / OS ----
+.DS_Store
+.idea/
+.vscode/
+*.swp
