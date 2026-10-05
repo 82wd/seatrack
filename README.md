@@ -58,6 +58,7 @@
 | 路径 | 说明 |
 |------|------|
 | [`README.md`](./README.md) | 本文件：完整复现流程 |
+| [`读书笔记.md`](./读书笔记.md) | 论文读书笔记：方法精读、**论文↔代码对照表**、消融解读、批判性思考 |
 | [`SEATrack-main/`](./SEATrack-main) | 官方代码（未修改，评测前需按 Step 6 改硬编码路径） |
 | [`SEATrack_中文译文.md`](./SEATrack_中文译文.md) | 论文全文中文翻译（含表 1~8 全部实验数据） |
 | `SEATrack： Simple, Efficient, and Adaptive Multimodal Tracker.pdf` | 论文原文 |
@@ -438,8 +439,21 @@ mkdir -p /nas/liziyan103/seatrack/downloads/{lasher,rgbt234,depthtrack,visevent}
 
 ### 5.1 LasHeR（RGB-T，先下这个）
 
-来源（百度盘）：<https://pan.baidu.com/s/1hZgK_OMHNp0fN20SJNNm9w> 密码 `mmic`
-备选：TeraBox <https://terabox.com/s/1GgKDG3wXVNYZiX97sUzJZQ> 密码 `yfi0`
+**来源（已核实，摘录自 [LasHeR 官方仓库 README](https://github.com/BUGPLEASEOUT/LasHeR)）：**
+
+> Download LasHeR from [BaiduNetdisk](https://pan.baidu.com/s/1hZgK_OMHNp0fN20SJNNm9w) (Password: mmic)
+> [BaiduNetdisk2](https://pan.baidu.com/s/1hnNwGmdvcFO6_n2Tx-MMBg) (Password: mmic)
+> or [TeraBox](https://terabox.com/s/1GgKDG3wXVNYZiX97sUzJZQ) (Password: yfi0).
+
+官方规模：**1224 组视频对（73 万+ 帧对）**，划分为 **979 训练 / 245 测试**。
+官方目录结构（与代码要求一致）：
+
+```text
+<序列>/
+├── visible/v000.jpg ...     ├── infrared/i000.jpg ...
+├── visible.txt              ├── infrared.txt
+└── init.txt
+```
 
 服务器基本没法直连百度盘 → **在你 Mac 上下好再传**：
 
@@ -462,8 +476,8 @@ rsync -avP ./LasHeR/testingset/  liziyan103@<服务器IP>:/nas/liziyan103/seatra
 核对：
 
 ```bash
-ls /nas/liziyan103/seatrack/datasets/lasher/trainingset | wc -l   # 应为 975（≥881 也能训练）
-ls /nas/liziyan103/seatrack/datasets/lasher/testingset  | wc -l   # 应为 245
+ls /nas/liziyan103/seatrack/datasets/lasher/trainingset | wc -l   # 官方 979；本仓库训练清单只用其中 881 个
+ls /nas/liziyan103/seatrack/datasets/lasher/testingset  | wc -l   # 官方 245，必须正好
 ls /nas/liziyan103/seatrack/datasets/lasher/testingset | head -3
 ls /nas/liziyan103/seatrack/datasets/lasher/testingset/$(ls /nas/liziyan103/seatrack/datasets/lasher/testingset | head -1)
 du -sh /nas/liziyan103/seatrack/datasets/lasher
@@ -517,7 +531,7 @@ ls trainingset | head -3; ls testingset | head -3
 ```
 
 ```bash
-ls /nas/liziyan103/seatrack/datasets/depthtrack/trainingset | wc -l   # 146（训练清单为准）
+ls /nas/liziyan103/seatrack/datasets/depthtrack/trainingset | wc -l   # 官方 152；本仓库训练清单 146
 ls /nas/liziyan103/seatrack/datasets/depthtrack/testingset  | wc -l   # 应为 50
 ```
 
@@ -685,7 +699,7 @@ python ./RGBT_workspace/test_rgbt_mgpus.py \
 跑完后：
 
 ```bash
-ls /nas/liziyan103/seatrack/SEATrack/RGBT_workspace/LasHeR | wc -l    # 应为 245
+ls /nas/liziyan103/seatrack/SEATrack/RGBT_workspace/LasHeR | wc -l    # 官方 245，必须正好
 ```
 
 再跑 RGBT234（建议先把 `--threads` 降下来，避免多进程爆显存）：
@@ -1045,6 +1059,7 @@ conda config --set solver classic
 | 单个评测进程不报错但没输出 | 异常被并行进程吞掉，用 Step 7 的单序列命令复现堆栈 |
 | SSH 断掉任务就停 | 用 `tmux`（Step 8 开头） |
 | 磁盘爆了 | 删 `~/seatrack/downloads`（只是缓存，解压后可删） |
+| 改了 `--hmoe_rank` / `--amglora_rank` 却毫无变化 | **这两个参数其实是无效的**：`attn_blocks.py:130` 写死 `amglora_rank=8`、`:145-146` 写死 `HMoE(dim,4,2,4)`，外层传值被忽略。要做 rank 消融必须改这两行（详见 [`读书笔记.md`](./读书笔记.md) 第 3 节） |
 
 ---
 
@@ -1112,7 +1127,7 @@ tmux new -s eval_t
 CUDA_VISIBLE_DEVICES=0,1 python ./RGBT_workspace/test_rgbt_mgpus.py \
   --script_name seatrack --dataset_name LasHeR --yaml_name rgbt --threads 8
 # 7
-ls RGBT_workspace/LasHeR | wc -l        # 应为 245
+ls RGBT_workspace/LasHeR | wc -l        # 官方 245，必须正好
 ```
 
 ---
@@ -1138,6 +1153,30 @@ ls RGBT_workspace/LasHeR | wc -l        # 应为 245
 - OSTrack 预训练：<https://drive.google.com/drive/folders/1ttafo0O5S9DXK2PX0YqPvPrQ-HWJjhSy>
 - LasHeR / RGBT234 / DepthTrack / VOT22-RGBD / VisEvent：见 [Step 5](#step-5--数据集)
 - 评测工具：LasHeR Toolkit / RGB-T Toolkit / VisEvent Benchmark / [VOT Toolkit](https://github.com/votchallenge/toolkit)
+
+## 数据来源与出处核对
+
+每个下载链接的出处都核过一遍，**优先以链接指向的官方仓库 README 为准**（网盘链接可能失效）：
+
+| 数据 / 权重 | 下载源 | 出处（已核实） |
+|-------------|--------|----------------|
+| RGBT234 | 百度盘 `weaiBh0_yH2BQni5eTxHgg` 码 `qvsq` | `SEATrack-main/README.md:63`（SEATrack 官方原文） |
+| SEATrack 权重 | HF / Google Drive / 百度盘 `r4s7` | `SEATrack-main/README.md:7-9`（官方原文） |
+| OSTrack 预训练 | Google Drive `1ttafo0O5S9DXK2PX0YqPvPrQ-HWJjhSy` | `SEATrack-main/README.md:110`（官方原文） |
+| VOT22-RGBD | votchallenge.net | `SEATrack-main/README.md:65`（官方原文） |
+| **LasHeR** | 百度盘 `1hZgK_OMHNp0fN20SJNNm9w` / `1hnNwGmdvcFO6_n2Tx-MMBg` 码 `mmic`；TeraBox 码 `yfi0` | SEATrack 只给了仓库链接；核对 → [LasHeR 官方 README](https://github.com/BUGPLEASEOUT/LasHeR) 原文一致 ✅ |
+| **DepthTrack** | Zenodo `10.5281/zenodo.5792146`（测试 50）<br>`5794115` + `5837926`（训练 152） | SEATrack 只给了 `DeT` 仓库链接；核对 → [DeT 官方 README](https://github.com/xiaozai/DeT) 原文一致 ✅ |
+| **VisEvent** | 百度盘 `1VhdORXT4OvG8TUESfDZHfw` 码 `AHUE`；Dropbox | SEATrack 只给了仓库链接；核对 → [VisEvent 官方 README](https://github.com/wangxiao5791509/VisEvent_SOT_Benchmark) 原文一致 ✅ |
+
+规模对照（官方 README 原文）：
+
+| 数据集 | 官方规模 | 本仓库代码实际使用 |
+|--------|----------|--------------------|
+| LasHeR | 1224 组视频对 = 979 训练 / 245 测试 | 训练清单 `lasher_train.txt` **881** 个；测试 245 |
+| DepthTrack | 152 训练 / 50 测试 | 训练清单 `depthtrack_train.txt` **146** 个；测试 50（`list.txt`） |
+| VisEvent | 820 组 = 500 训练 / 320 测试 | 训练清单 `visevent_train.txt` 500；测试按 `testlist.txt` 320 |
+| RGBT234 | 234 段 | 测试 234 |
+| VOT22-RGBD | 127 段 | 测试 127（`VOT22RGBD_workspace/list.txt`） |
 
 ## 说明
 
