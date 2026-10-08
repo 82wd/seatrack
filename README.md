@@ -445,23 +445,75 @@ mkdir -p /nas/liziyan103/seatrack/downloads/{lasher,rgbt234,depthtrack,visevent}
 > [BaiduNetdisk2](https://pan.baidu.com/s/1hnNwGmdvcFO6_n2Tx-MMBg) (Password: mmic)
 > or [TeraBox](https://terabox.com/s/1GgKDG3wXVNYZiX97sUzJZQ) (Password: yfi0).
 
-官方规模：**1224 组视频对（73 万+ 帧对）**，划分为 **979 训练 / 245 测试**。
-官方目录结构（与代码要求一致）：
+网盘失效是常态，下面 ① 里的链接请逐个试：
 
-```text
-<序列>/
-├── visible/v000.jpg ...     ├── infrared/i000.jpg ...
-├── visible.txt              ├── infrared.txt
-└── init.txt
-```
+#### ① 官方源（摘录自官方仓库 README）
 
-服务器基本没法直连百度盘 → **在你 Mac 上下好再传**：
+| 源 | 链接 | 密码 | 实测状态 |
+|----|------|------|----------|
+| 百度盘 1 | `https://pan.baidu.com/s/1hZgK_OMHNp0fN20SJNNm9w` | `mmic` | ❌ **2026-10 实测已失效**（分享被取消） |
+| 百度盘 2 | `https://pan.baidu.com/s/1hnNwGmdvcFO6_n2Tx-MMBg` | `mmic` | ⬜ 未验证，先试它 |
+| TeraBox | `https://terabox.com/s/1GgKDG3wXVNYZiX97sUzJZQ` | `yfi0` | ⬜ 未验证 |
+
+**② 官方源全挂时的兜底：HuggingFace 第三方完整镜像**
+
+[`xche32/lasher`](https://huggingface.co/datasets/xche32/lasher)：公开、**约 224 GB**、1004 次下载，
+内容为切成 5 个分包的 `lasher.tar.gz.part.aa ~ .ae`（2025-06 上传，非 gated）。
+
+> ⚠️ 同名仓库别乱用：`menhuiwen/LasHeR` 是空仓库（只有 `.gitattributes`，`usedStorage=0`）。
+
+**在 Mac 上下载**（服务器 Python 访问 HF 不通，见附录 A-2）：
 
 ```bash
-# 【Mac 端】
-rsync -avP ./LasHeR/trainingset/ liziyan103@<服务器IP>:/nas/liziyan103/seatrack/datasets/lasher/trainingset/
-rsync -avP ./LasHeR/testingset/  liziyan103@<服务器IP>:/nas/liziyan103/seatrack/datasets/lasher/testingset/
+export PATH="/Users/lzy/Library/Python/3.9/bin:$PATH"
+df -h ~          # 需预留：分包 224GB + 解压后 ~220GB，建议 ≥ 450GB 可用
+mkdir -p ~/Desktop/lasher_hf && cd ~/Desktop/lasher_hf
+
+python3 - <<'PY'
+from huggingface_hub import snapshot_download
+print(snapshot_download('xche32/lasher', repo_type='dataset', local_dir='.'))
+PY
+ls -lh
 ```
+
+怕断线就挂后台（写成脚本再 nohup，避免命令行转义问题）：
+
+```bash
+cat > ~/Desktop/dl_lasher.py <<'EOF'
+from huggingface_hub import snapshot_download
+snapshot_download('xche32/lasher', repo_type='dataset', local_dir='/Users/lzy/Desktop/lasher_hf')
+print('DONE')
+EOF
+nohup python3 ~/Desktop/dl_lasher.py > ~/Desktop/lasher_dl.log 2>&1 &
+tail -f ~/Desktop/lasher_dl.log
+```
+
+合并分包，**先看结构、别急着全解**：
+
+```bash
+cd ~/Desktop/lasher_hf
+cat lasher.tar.gz.part.a{a,b,c,d,e} > lasher.tar.gz
+tar -tzf lasher.tar.gz | head -30                       # 确认顶层是 trainingset / testingset
+```
+
+只解测试集（评测就够，省一半时间和磁盘）：
+
+```bash
+mkdir -p ~/Desktop/LasHeR_out
+tar -xzf lasher.tar.gz -C ~/Desktop/LasHeR_out --wildcards '*/testingset/*'
+du -sh ~/Desktop/LasHeR_out
+```
+
+**传到服务器（Mac 端）：**
+
+```bash
+# 先只传测试集，跑通评测后再考虑训练集
+rsync -avP ~/Desktop/LasHeR_out/*/testingset/  liziyan103@<服务器IP>:/nas/liziyan103/seatrack/datasets/lasher/testingset/
+# 要自己训练（Step 9）时再传训练集
+rsync -avP ~/Desktop/LasHeR_out/*/trainingset/ liziyan103@<服务器IP>:/nas/liziyan103/seatrack/datasets/lasher/trainingset/
+```
+
+> 💡 不管从哪弄到的数据（网盘 / HF 镜像 / 别人拷的移动硬盘），只要整理成本节末尾的目录结构即可，来源不影响后续步骤。
 
 传完在服务器上整理成这个样子：
 
@@ -483,7 +535,11 @@ ls /nas/liziyan103/seatrack/datasets/lasher/testingset/$(ls /nas/liziyan103/seat
 du -sh /nas/liziyan103/seatrack/datasets/lasher
 ```
 
-❌ train/test 数量反了或混在一起 → 现在是 trainingset/testingset,务必分开，评测脚本只认 `testingset`。
+❌ train/test 数量反了或混在一起 → 务必分成 `trainingset` / `testingset`，评测脚本只认 `testingset`。
+
+> 🔁 **LasHeR 实在拿不到时的降级路线**：RGB-T 评测还有第二个基准 —— [Step 5.2 的 RGBT234](#52-rgbt234rgb-t-第二个测试集234-段)（仅 15GB 左右）。
+> 用它跑 `--dataset_name RGBT234`，对照目标是 **MPR 87.8 / MSR 63.9**（论文表 1），
+> 足以验证「环境 + 权重 + 路径」这条链路是否通，只是论文主表 LasHeR 那一栏没法复现。
 
 ### 5.2 RGBT234（RGB-T 第二个测试集，234 段）
 
@@ -497,32 +553,88 @@ du -sh /nas/liziyan103/seatrack/datasets/lasher
 ls /nas/liziyan103/seatrack/datasets/rgbt234 | wc -l    # 应为 234
 ```
 
-### 5.3 DepthTrack（RGB-D，Zenodo 可以 wget）
+### 5.3 DepthTrack（RGB-D，**推荐先下这个**）
+
+> ⚠️ **重要更正（2026-10 实测）**：Zenodo 上**没有**整包 `DepthTrack_Test.zip`，
+> 而是**按序列拆分**的 50 个独立 zip。网上流传的
+> `.../files/DepthTrack_Test.zip?download=1` 会返回 **404**。正确做法见下面。
+>
+> 已核实的真实体量（来自 Zenodo API）：
+
+| 记录 | DOI | 内容 | 文件数 | 真实大小 |
+|------|-----|------|--------|----------|
+| **测试集** | 10.5281/zenodo.5792146 | DepthTrack Test Set，50 序列 | **50 个 zip** | **18.27 GB** |
+| 训练集 01 | 10.5281/zenodo.5794115 | Training Set 01，100 序列 | 100 个 zip | 37.8 GB |
+| 训练集 02 | 10.5281/zenodo.5837926 | Training Set 02，52 序列 | 52 个 zip | 16.02 GB |
+
+> 💡 **只评测只需要测试集（18GB）**，训练集 53.8 GB 是你要跑 Step 9 自训练才下。
+
+#### ① 拉文件清单（在服务器上，curl 能通 Zenodo）
 
 ```bash
-cd /nas/liziyan103/seatrack/downloads/depthtrack
-wget -c "https://zenodo.org/records/5792146/files/DepthTrack_Test.zip?download=1"      -O DepthTrack_Test.zip
-wget -c "https://zenodo.org/records/5794115/files/DepthTrack_Train_100.zip?download=1" -O DepthTrack_Train_100.zip
-wget -c "https://zenodo.org/records/5837926/files/DepthTrack_Train_52.zip?download=1"  -O DepthTrack_Train_52.zip
+mkdir -p ~/seatrack/downloads/depthtrack/test && cd ~/seatrack/downloads/depthtrack/test
 
-cd /nas/liziyan103/seatrack/datasets
-mkdir -p depthtrack/trainingset depthtrack/testingset
-unzip -q /nas/liziyan103/seatrack/downloads/depthtrack/DepthTrack_Test.zip      -d depthtrack/testingset
-unzip -q /nas/liziyan103/seatrack/downloads/depthtrack/DepthTrack_Train_100.zip -d depthtrack/trainingset
-unzip -q /nas/liziyan103/seatrack/downloads/depthtrack/DepthTrack_Train_52.zip  -d depthtrack/trainingset
+# 测试集：验证 API 可用 + 看总量
+curl -s --max-time 30 https://zenodo.org/api/records/5792146 | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+print('文件数', len(d['files']), '合计', round(sum(f['size'] for f in d['files'])/1e9, 2), 'GB')
+print(d['metadata']['title'])
+"
 ```
 
-> ⚠️ Zenodo 的 zip 可能自带一层外层目录（`-d` 后变成 `testingset/DepthTrack_Test/<序列>`）。务必把它压平，
-> 最终必须直接是 `testingset/<序列名>/`：
+#### ② 下载（进 tmux，逐个 zip）
 
 ```bash
-cd /nas/liziyan103/seatrack/datasets/depthtrack
-# 如果看到多了一层，用这条压平：
-find . -maxdepth 3 -mindepth 2 -type d -name "DepthTrack*" -exec sh -c 'mv "$1"/* "$(dirname "$1")"/ && rmdir "$1"' _ {} \;
-ls trainingset | head -3; ls testingset | head -3
+tmux new -s dl_depth
+cd ~/seatrack/downloads/depthtrack/test
+
+# 生成文件名清单
+curl -s --max-time 30 https://zenodo.org/api/records/5792146 \
+  | python3 -c "import sys,json;[print(f['key']) for f in json.load(sys.stdin)['files']]" > filelist.txt
+wc -l filelist.txt              # 必须是 50
+
+# 逐个下（-c 支持断点续传，已存在的会跳过）
+while read -r k; do
+  if [ ! -s "$k" ]; then
+    wget -c -q --show-progress "https://zenodo.org/records/5792146/files/$k?download=1" -O "$k"
+  fi
+done < filelist.txt
+
+du -sh .                        # 应接近 18GB
+ls -1 *.zip | wc -l             # 50
 ```
 
-结构要求（**帧名 8 位补零、从 1 开始**，硬要求，见 `lib/train/dataset/depthtrack.py:110`）：
+> 训练集同理，把 `5792146` 换成 `5794115` / `5837926` 即可。
+
+#### ③ 解压成 `testingset/<序列名>/`
+
+每个 zip 解开就是同名序列目录（内含 `color/`、`depth/`、`groundtruth.txt`）：
+
+```bash
+mkdir -p ~/seatrack/datasets/depthtrack/testingset
+cd ~/seatrack/downloads/depthtrack/test
+
+for z in *.zip; do
+  n="${z%.zip}"
+  mkdir -p ~/seatrack/datasets/depthtrack/testingset/"$n"
+  unzip -q -o "$z" -d ~/seatrack/datasets/depthtrack/testingset/"$n"
+done
+
+# 若 zip 内还包了一层同名目录，把它压平
+cd ~/seatrack/datasets/depthtrack/testingset
+find . -mindepth 2 -maxdepth 2 -type d -exec sh -c '
+  inner="$1"; outer="$(dirname "$1")"
+  [ "$(basename "$inner")" = "$(basename "$outer")" ] && mv "$inner"/* "$outer"/ && rmdir "$inner"
+' _ {} \;
+
+ls | wc -l                                    # 必须 50
+ls | head -3
+ls "$(ls | head -1)"                          # 应看到 color/ depth/ groundtruth.txt
+ls "$(ls | head -1)"/color | head -3          # 00000001.jpg ...
+```
+
+结构要求（**帧名 8 位补零、从 1 开始**，代码硬要求，见 `lib/train/dataset/depthtrack.py:110`）：
 
 ```text
 <序列名>/color/00000001.jpg
@@ -531,8 +643,9 @@ ls trainingset | head -3; ls testingset | head -3
 ```
 
 ```bash
-ls /nas/liziyan103/seatrack/datasets/depthtrack/trainingset | wc -l   # 官方 152；本仓库训练清单 146
-ls /nas/liziyan103/seatrack/datasets/depthtrack/testingset  | wc -l   # 应为 50
+ls ~/seatrack/datasets/depthtrack/testingset  | wc -l   # 官方 50，必须正好
+# 训练时才需要：
+ls ~/seatrack/datasets/depthtrack/trainingset | wc -l   # 官方 152；本仓库训练清单用 146
 ```
 
 #### VOT 评测还要再拷一份进代码仓
@@ -922,6 +1035,13 @@ cd /nas/liziyan103/seatrack/datasets/lasher/trainingset && \
 | DepthTrack | VOT toolkit（Step 8.3 已产出） | `SEATrack/Depthtrack_workspace/analysis/` | PR / RE / F |
 | VOT22-RGBD | VOT toolkit（同上） | `SEATrack/VOT22RGBD_workspace/analysis/` | EAO / Acc / Rob |
 
+> ✅ **不需要提交任何官方评测服务器，全部指标本地计算。**
+> 依据：官方 README 只给了本地 toolkit；且作者把本地跑出的 VOT 报告直接放在仓库里
+> （`SEATrack-main/Depthtrack_workspace/analysis/rgbd/seatrack_depthtrack.html`，
+> 内容就是 `Pr 0.629 / Re 0.635 / F 0.632`，与论文表 1 完全一致）。
+>
+> 只有想上 votchallenge.net 官方**榜单排名**时才需要提交，那是为了参赛/上榜，与复现数字无关。
+
 #### 目标：复现成功 = 达到这几个数
 
 | 基准 | 指标 | 论文值 |
@@ -1037,6 +1157,21 @@ conda config --set solver classic
 | 网络 | `curl` / `wget` 通；Python 访问 HF 不通 |
 
 > 共享机器：跑之前先 `nvidia-smi` 挑两张**空闲**卡，别抢别人在用的。
+
+---
+
+### A-7 百度网盘链接会随时间失效
+
+2026-10 实测：官方 README 里列在第一个的 LasHeR 百度盘分享已被取消（打开提示「链接失效/已被删除」）。
+
+应对的一句话原则：**官方 README 里给的网盘链接永远先全部试一遍，再找镜像。**
+
+- LasHeR 另有百度盘 2 与 TeraBox 两个官方备选（Step 5.1 表格）
+- 全挂 → 用 HuggingFace 第三方镜像 `xche32/lasher`（详见 Step 5.1 的 ②）
+- 拿不到 → RGB-T 评测可降级到 RGBT234（15GB，见 Step 5.2）
+
+> 顺带提醒：本仓库 `README.md` 里所有网盘链接都会随时间失效，
+> 若你发现某条挂了，请顺手改掉本文件里那条链接并提 PR/commit。
 
 ---
 
@@ -1165,7 +1300,9 @@ ls RGBT_workspace/LasHeR | wc -l        # 官方 245，必须正好
 | OSTrack 预训练 | Google Drive `1ttafo0O5S9DXK2PX0YqPvPrQ-HWJjhSy` | `SEATrack-main/README.md:110`（官方原文） |
 | VOT22-RGBD | votchallenge.net | `SEATrack-main/README.md:65`（官方原文） |
 | **LasHeR** | 百度盘 `1hZgK_OMHNp0fN20SJNNm9w` / `1hnNwGmdvcFO6_n2Tx-MMBg` 码 `mmic`；TeraBox 码 `yfi0` | SEATrack 只给了仓库链接；核对 → [LasHeR 官方 README](https://github.com/BUGPLEASEOUT/LasHeR) 原文一致 ✅ |
+| **LasHeR（备用镜像）** | HF 数据集 [`xche32/lasher`](https://huggingface.co/datasets/xche32/lasher)，224GB / 5 分包 | 2026-10 因百度盘失效而追加；`usedStorage=224GB`、1004 次下载，公开非 gated ✅ |
 | **DepthTrack** | Zenodo `10.5281/zenodo.5792146`（测试 50）<br>`5794115` + `5837926`（训练 152） | SEATrack 只给了 `DeT` 仓库链接；核对 → [DeT 官方 README](https://github.com/xiaozai/DeT) 原文一致 ✅ |
+| DepthTrack **下载方式** | Zenodo 上**没有整包 zip**，是 50 个按序列的 zip（测试 18.27GB）；`.../files/DepthTrack_Test.zip?download=1` 会 **404** | 2026-10 实测：用 Zenodo API `/api/records/5792146/files` 取真实文件清单逐个下载，见 Step 5.3 |
 | **VisEvent** | 百度盘 `1VhdORXT4OvG8TUESfDZHfw` 码 `AHUE`；Dropbox | SEATrack 只给了仓库链接；核对 → [VisEvent 官方 README](https://github.com/wangxiao5791509/VisEvent_SOT_Benchmark) 原文一致 ✅ |
 
 规模对照（官方 README 原文）：
