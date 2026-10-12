@@ -5,6 +5,7 @@
 
 ## 导航
 
+- [代码框架与调用关系](#21-代码框架与调用关系)
 - [模型与输入输出](#3-能把一次-forward-讲清楚)
 - [AMG-LoRA 与 HMoE](#4-两个核心模块究竟做了什么)
 - [训练流程](#5-训练数据可训练参数和-loss)
@@ -36,6 +37,185 @@
 
 上表路径除特别注明外均相对 `SEATrack-main/`。快速跳转：[模型入口](./SEATrack-main/lib/models/seatrack/seatrack.py)、[双流骨干](./SEATrack-main/lib/models/seatrack/vit_ci.py)、[核心 block](./SEATrack-main/lib/models/layers/attn_blocks.py)。
 
+### 2.1 代码框架与调用关系
+
+**代码框架讲的是各部分如何分工和调用；模型结构讲的是神经网络内部如何计算。** AMG-LoRA、HMoE 属于模型结构，而数据读取、训练循环、权重保存和评测脚本共同构成整个项目的代码框架。
+
+可以先把工程理解为五部分：**入口决定跑什么，数据模块准备输入，模型负责预测，训练模块负责学习，跟踪与评测模块负责在视频上运行并检验结果。**
+
+```mermaid
+flowchart TD
+    C[任务配置 YAML] --> A[训练组装 train_script.run]
+    E[训练入口 run_training] --> A
+    A --> D[数据管线 Dataset / Sampler / Processing / Loader]
+    A --> T[Trainer 训练循环]
+    D --> T
+    T --> R[Actor 调用模型并计算 loss]
+    R --> M[SEATrack 模型：Backbone + Head]
+    M --> R
+    R --> O[反向传播与优化器更新]
+    O --> W[保存 checkpoint]
+    W --> K[Tracker 加载模型并逐帧跟踪]
+    V[测试序列与首帧目标框] --> K
+    K --> P[预测轨迹]
+    P --> Q[评测工具计算指标]
+```
+
+图中的 checkpoint 是保存下来的模型文件。训练时会反复执行预测、计算误差和更新参数；测试时加载权重进行预测，不再用真实框更新模型。
+
+### 2.2 目录按职责怎么分
+
+下面只列与当前 SEATrack 主流程有关的目录，不是全部文件清单。
+
+```text
+seatrack/
+├── README.md                      复现操作说明
+├── Codebase讨论准备.md             本文：源码框架与修改说明
+├── 复现日志.md                     历史执行过程和证据
+├── scripts/                       本次复现的辅助脚本
+├── result/                        已归档的评测结果
+└── SEATrack-main/                  算法代码主体
+    ├── experiments/seatrack/       rgbt / rgbd / rgbe 任务配置
+    ├── tracking/                  训练启动、路径配置等入口
+    ├── lib/
+    │   ├── config/seatrack/        默认配置及 YAML 加载逻辑
+    │   ├── models/
+    │   │   ├── seatrack/           模型组装与 ViT 骨干
+    │   │   └── layers/             注意力、LoRA、HMoE、定位头
+    │   ├── train/
+    │   │   ├── dataset/            按数据集格式读图像和标注
+    │   │   ├── data/               采样、裁剪、增强、组成 batch
+    │   │   ├── actors/             模型预测与 loss 计算
+    │   │   ├── trainers/           训练循环、更新、验证和保存
+    │   │   └── admin/              环境路径、运行设置和日志支持
+    │   ├── test/
+    │   │   ├── parameter/          测试配置和权重路径
+    │   │   ├── tracker/            初始化、逐帧跟踪、状态更新
+    │   │   ├── evaluation/         评测基础设施和环境配置
+    │   │   └── vot/                与 VOT 评测工具的接入
+    │   └── utils/                 框坐标、损失等公共工具
+    ├── RGBT_workspace/            RGB-T 测试脚本
+    ├── RGBE_workspace/            RGB-E 测试脚本
+    ├── Depthtrack_workspace/      DepthTrack 的 VOT 工作区
+    └── VOT22RGBD_workspace/       VOT22-RGBD 的 VOT 工作区
+```
+
+### 2.3 训练启动时：谁创建谁
+
+通常的启动链是：
+
+```text
+tracking/train.py
+  └─ 选择启动方式，启动 lib/train/run_training.py
+       └─ 准备设备、随机种子、settings 和任务配置路径
+            └─ lib/train/train_script.py::run(settings)
+                 ├─ 读取默认配置，用任务 YAML 覆盖
+                 ├─ build_dataloaders() → 训练 / 验证数据加载器
+                 ├─ build_seatrack() → 模型，加载预训练初始化
+                 ├─ SEATrackActor() → 绑定模型和损失函数
+                 ├─ get_optimizer_scheduler() → 优化器与学习率策略
+                 └─ LTRTrainer() → 开始按轮次训练
+```
+
+源码入口：[tracking/train.py](./SEATrack-main/tracking/train.py)、[run_training.py](./SEATrack-main/lib/train/run_training.py)、[train_script.py](./SEATrack-main/lib/train/train_script.py)。后续独立训练的 [run_task.py](./scripts/remaining_training/run_task.py) 直接通过分布式启动器调用 `run_training.py`，跳过外层 `tracking/train.py`；后面的训练组装逻辑相同。
+
+配置有三种不同职责：
+
+| 配置来源 | 管什么 | 例子 |
+|---|---|---|
+| [config.py](./SEATrack-main/lib/config/seatrack/config.py) | 提供默认值和配置加载规则 | 默认 rank、默认模型设置 |
+| [任务 YAML](./SEATrack-main/experiments/seatrack/) | 覆盖本次任务的实验设置 | RGB-D 训练 25 轮，RGB-E 学习率 6e-5 |
+| [训练环境 local.py](./SEATrack-main/lib/train/admin/local.py) 与启动参数 | 指定机器环境和输出位置 | 数据目录、`--save_dir`、GPU 环境变量 |
+
+所以不能只看 `config.py` 的默认值就判断实际训练参数，还要看使用的 YAML 和运行副本。配置是否真正生效，还取决于对应构造函数有没有使用它，第 9 节的 rank 问题就是例子。
+
+### 2.4 数据管线：dataset 和 data 为什么分开
+
+可以把两者理解成“从硬盘取材料”和“把材料准备成模型输入”。
+
+| 部件 | 负责什么 | 对应源码 |
+|---|---|---|
+| Dataset | 知道这个数据集的图片、模态和标注放在哪里，按帧读取 | [lasher.py](./SEATrack-main/lib/train/dataset/lasher.py)、[depthtrack.py](./SEATrack-main/lib/train/dataset/depthtrack.py)、[visevent.py](./SEATrack-main/lib/train/dataset/visevent.py) |
+| TrackingSampler | 从序列中选出模板帧和搜索帧，考虑可见性与采样间隔 | [sampler.py](./SEATrack-main/lib/train/data/sampler.py) |
+| seatrackProcessing | 根据目标框裁剪区域，缩放、增强，转换标注坐标 | [processing.py](./SEATrack-main/lib/train/data/processing.py) |
+| LTRLoader | 把多个样本组成一个 batch，交给训练循环 | [loader.py](./SEATrack-main/lib/train/data/loader.py) |
+
+送到 Actor 的数据中，重要字段包括 `template_images`、`search_images`、`template_anno`、`search_anno`。`anno` 是 annotation 的缩写，也就是标注。当前训练每个样本使用一个模板和一个搜索区域；Actor 将图像整理好后送入模型，使用搜索区域标注计算误差。
+
+### 2.5 模型、Actor、Trainer 怎么区分
+
+这是读训练框架时最容易混淆的三个角色。
+
+| 角色 | 一句话职责 | 输入 → 输出 |
+|---|---|---|
+| Model：`SEATrack` | 看图并预测目标位置 | 模板、搜索图 → 框与预测图 |
+| Actor：`SEATrackActor` | 调用模型，将预测与标注比较 | 一个 batch → loss 和统计值 |
+| Trainer：`LTRTrainer` | 控制训练进度和参数更新 | 加载器、Actor、优化器 → 多轮训练和 checkpoint |
+
+具体对应关系：
+
+- [模型 SEATrack](./SEATrack-main/lib/models/seatrack/seatrack.py) 包含 `backbone` 和 `box_head`。前者提取并融合特征，后者完成定位预测。
+- [SEATrackActor.__call__()](./SEATrack-main/lib/train/actors/seatrack.py) 先执行 `forward_pass()`，再执行 `compute_losses()`。
+- [LTRTrainer.cycle_dataset()](./SEATrack-main/lib/train/trainers/ltr_trainer.py) 取 batch、调用 Actor，并在训练阶段执行反向传播、梯度裁剪和优化器更新。
+- [BaseTrainer.train()](./SEATrack-main/lib/train/trainers/base_trainer.py) 管外层 epoch 循环、恢复 checkpoint、学习率调度和保存；`LTRTrainer` 在这个基类上实现具体的每轮训练。
+
+一次训练迭代可以用下面的**示意代码**理解；真实实现还包含设备迁移、AMP、梯度裁剪和日志等处理：
+
+```python
+for batch in train_loader:
+    loss, stats = actor(batch)  # 内部：模型 forward → 与真实框比较
+    optimizer.zero_grad()
+    loss.backward()            # 计算各可训练参数应如何调整
+    optimizer.step()           # 实际更新参数
+```
+
+模型内部的组装关系则是：
+
+```text
+SEATrack（lib/models/seatrack/seatrack.py）
+├── backbone：VisionTransformerCE（vit_ci.py）
+│   ├── PatchEmbed：图片 → token
+│   ├── 12 个 CEBlock_AP：两路特征处理
+│   │   ├── 共享 Attention 与 MLP
+│   │   └── 在指定层加入 LoRA、注意力对齐与 HMoE
+│   └── 两路 search 特征相加
+└── box_head：CenterPredictor（layers/head.py）
+    └── 中心分数、尺寸、偏移及预测框
+```
+
+这里“共享”是指 RGB 和另一模态调用相同的层参数；12 个不同深度的 block 各自拥有参数，并不是 12 层都复用同一套权重。详见 [骨干](./SEATrack-main/lib/models/seatrack/vit_ci.py)、[block](./SEATrack-main/lib/models/layers/attn_blocks.py)、[定位头](./SEATrack-main/lib/models/layers/head.py)。
+
+### 2.6 测试框架：Model 和 Tracker 也不是同一个东西
+
+模型负责一次预测，而 Tracker 负责把这些预测连成一段视频的跟踪过程。
+
+| 部分 | 职责 | 源码入口 |
+|---|---|---|
+| 参数入口 | 读取任务配置并选择权重 | [parameter/seatrack.py](./SEATrack-main/lib/test/parameter/seatrack.py) |
+| Tracker | 保存首帧模板和上一帧框，裁剪当前搜索区域，调用模型，做后处理并更新状态 | [tracker/seatrack.py](./SEATrack-main/lib/test/tracker/seatrack.py) |
+| 数据集测试脚本 / VOT 适配器 | 遍历视频帧，接入 Tracker，输出结果 | [RGB-T](./SEATrack-main/RGBT_workspace/test_rgbt_mgpus.py)、[RGB-E](./SEATrack-main/RGBE_workspace/test_rgbe_mgpus.py)、[VOT](./SEATrack-main/lib/test/vot/seatrack_baseline.py) |
+| 指标分析 | 将预测结果与标注比较，计算数据集对应指标 | 结合数据集评测工具，已有产物见 [result](./result/README.md) |
+
+特别注意：`lib/models/seatrack/seatrack.py` 与 `lib/test/tracker/seatrack.py` 都有名为 `SEATrack` 的类，但职责不同。前者是神经网络，后者是调用神经网络的跟踪程序。测试主流程不需要训练 Actor 和优化器。
+
+### 2.7 后面要改功能，应该从哪里入手
+
+| 想做什么 | 优先阅读 / 修改的位置 |
+|---|---|
+| 调学习率、训练轮数、batch | `experiments/seatrack/*.yaml`，再检查 `base_functions.py` 如何读取 |
+| 换数据集或修正帧名 | `lib/train/dataset/`；数据集名称注册见 `base_functions.py::names2datasets()` |
+| 改模板 / 搜索帧采样 | `lib/train/data/sampler.py` |
+| 改裁剪、缩放、图像增强 | `lib/train/data/processing.py`、`transforms.py` |
+| 改注意力对齐或融合 | `lib/models/layers/attn_blocks.py`、`attn.py` |
+| 改损失函数 | `lib/train/actors/seatrack.py`，同时检查 `train_script.py` 的损失注册与权重 |
+| 改保存、训练日志或训练循环 | `lib/train/trainers/` |
+| 换测试权重 | `lib/test/parameter/seatrack.py`，核对最终解析路径 |
+| 改搜索区域或跟踪后处理 | `lib/test/tracker/seatrack.py` 与任务 TEST 配置 |
+
+向师兄介绍框架时可以这样说：
+
+> 我把工程分成入口配置、数据管线、模型、训练控制和跟踪评测五部分。训练入口组装数据加载器、SEATrack 模型、Actor 和 Trainer。模型只负责预测，Actor 负责计算 loss，Trainer 负责循环和更新。测试时由 Tracker 管理模板与上一帧位置，调用同一个模型输出逐帧结果，再交给评测工具计算指标。
+
 ## 3. 能把一次 forward 讲清楚
 
 默认配置是一张 template 加一张 search。template 是目标参考图，search 是待定位区域。
@@ -47,7 +227,7 @@ template: [B, 6, 128, 128]       search: [B, 6, 256, 256]
 每个模态：template 64 tokens + search 256 tokens
            ↓
 RGB: [B,320,768]       X: [B,320,768]
-           ↓ 12 个共享参数的 Transformer block
+           ↓ 12 个 Transformer block，各层参数在两种模态间共享
 第 2/4/6/8/10/12 层加入 AMG-LoRA 与 HMoE
            ↓
 两路 search 特征逐元素相加：[B,256,768]
