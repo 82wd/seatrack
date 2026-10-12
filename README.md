@@ -86,6 +86,7 @@
 - [排错 FAQ](#排错-faq)
 - [一键体检（任何时候怀疑哪步没做对就跑）](#一键体检任何时候怀疑哪步没做对就跑)
 - [最短路线（L1：只跑官方权重 + LasHeR，约 3 小时）](#最短路线l1只跑官方权重--lasher约-3-小时)
+- [操作日志（实机执行记录）](#操作日志实机执行记录)
 
 ---
 
@@ -1314,6 +1315,184 @@ ls RGBT_workspace/LasHeR | wc -l        # 官方 245，必须正好
 | VisEvent | 820 组 = 500 训练 / 320 测试 | 训练清单 `visevent_train.txt` 500；测试按 `testlist.txt` 320 |
 | RGBT234 | 234 段 | 测试 234 |
 | VOT22-RGBD | 127 段 | 测试 127（`VOT22RGBD_workspace/list.txt`） |
+
+## 操作日志（实机执行记录）
+
+> 从 2026-10-10 起，**服务器上执行的每一步、以及每一步的结果，都记在这一节**，按时间顺序追加。
+> 格式：`日期 #序号 · 做了什么 → 实际输出/结论`。目的：换机器、换人、或几个月后回来看，能立刻知道「做到哪一步了、哪一步还没做」。
+
+### 当前进度快照
+
+| 阶段 | 状态 |
+|------|------|
+| Step 0 体检 | ✅ 已做（见 #1） |
+| Step 1 放好代码 | ⬜ 待确认 |
+| Step 2 conda 环境 | ⬜ 待做 |
+| Step 3 路径配置 | ⬜ 待做 |
+| Step 4 权重 | ⬜ 待做 |
+| Step 5.1 LasHeR | 🟡 已下载，已挪进 `datasets/`，**待校验层级与数量** |
+| Step 5.2 RGBT234 | ⬜ 未下（可选） |
+| Step 5.3 DepthTrack | 🟡 **测试集 50 段已解压到位 ✅**；训练集 1 个压缩包待解（仅自训练需要） |
+| Step 5.4 VOT22-RGBD | ⬜ 未下 |
+| Step 5.5 VisEvent | 🟡 已下载，压缩包在 `datasets/visevent/VisEvent_dataset/`，**待解压** |
+| Step 1 注 | ❗ 代码仓疑似嵌套 `SEATrack/SEATrack-main`，`CODE` 待定（见 #6） |
+| Step 6~8 | ⬜ 待做 |
+
+### 2026-10-10
+
+**#1 · Step 0 体检：确认家目录与 conda**
+
+```bash
+(base) liziyan103@user:~$ ls
+anaconda3  cuda-11.8  dl_lasher.py  hfd.sh  lasher  seatrack  visevent  zero-shot
+```
+
+→ 结论：家目录即 README 里的 `$HOME`，`~/seatrack` 就是 `$ROOT`，与「变量速查」表一致，路径无需全局替换。
+→ 已能进 `(base)` 环境，说明 `conda` 已进 PATH（比 README 预期的好，省掉 `source ~/anaconda3/etc/profile.d/conda.sh`）。
+→ ❗ 新增发现：根目录散落着 `dl_lasher.py`、`hfd.sh`、`lasher`、`visevent`、`depthtrack_train`（后一个下次 `ls` 才发现），**都不在应该在的位置**，需要归档。
+
+**#2 · 数据集全部下在了根目录，需要归位**
+
+按 `DL = ~/seatrack/downloads`（下载缓存）与 `DATA = ~/seatrack/datasets`（整理后数据）的约定，归属如下：
+
+| 根目录散落物 | 归属 | 目标位置 |
+|--------------|------|----------|
+| `dl_lasher.py` | 下载脚本 | `~/seatrack/downloads/` |
+| `hfd.sh` | 下载脚本 | `~/seatrack/downloads/` |
+| `lasher` | 数据集 | `~/seatrack/datasets/lasher/{trainingset,testingset}` |
+| `visevent` | 数据集 | `~/seatrack/datasets/visevent/{trainingset,testingset}` |
+| `depthtrack_train` | 原始压缩包 → 数据集 | 压缩包 `~/seatrack/downloads/depthtrack/train/`；解压后 `~/seatrack/datasets/depthtrack/trainingset/` |
+
+→ 教训：**下载前先 `mkdir -p` 再 `cd` 进去下**，别在 `~` 里直接跑下载脚本，否则事后要花时间找和挪。
+
+**#3 · 已建议执行的归档命令（执行后把结果填回 #4）**
+
+```bash
+# 3-1 先看层级（hfd.sh / snapshot_download 常多包一层仓库名），别急着 mv
+find ~/lasher   -maxdepth 3 -type d | head -20
+find ~/visevent -maxdepth 3 -type d | head -20
+du -sh ~/lasher ~/visevent ~/depthtrack_train
+df -h ~
+
+# 3-2 下载脚本归位
+mkdir -p ~/seatrack/downloads/{lasher,rgbt234,visevent} ~/seatrack/downloads/depthtrack/{test,train}
+mv ~/dl_lasher.py ~/hfd.sh ~/seatrack/downloads/
+
+# 3-3 数据集归位（A：顶层直接是 trainingset/testingset 时用这条）
+mkdir -p ~/seatrack/datasets
+mv ~/lasher   ~/seatrack/datasets/lasher
+mv ~/visevent ~/seatrack/datasets/visevent
+
+# 3-3 备选（B：多了一层，如 ~/lasher/LasHeR/trainingset）
+mkdir -p ~/seatrack/datasets/{lasher,visevent}
+mv ~/lasher/*/trainingset ~/lasher/*/testingset ~/seatrack/datasets/lasher/
+mv ~/visevent/*/trainingset ~/visevent/*/testingset ~/seatrack/datasets/visevent/
+
+# 3-4 depthtrack 训练集（先当缓存，只有 Step 9 自训练才需要解压）
+mv ~/depthtrack_train ~/seatrack/downloads/depthtrack/train
+```
+
+**#4 · 归档后的校验（待执行，把数字填进来）**
+
+```bash
+ls ~/seatrack/datasets/lasher/testingset  | wc -l   # 期望 245
+ls ~/seatrack/datasets/lasher/trainingset | wc -l   # 期望 979（训练清单用 881）
+ls ~/seatrack/datasets/visevent/trainingset | wc -l # 期望 500
+ls ~/seatrack/downloads/depthtrack/train/*.zip | wc -l  # 期望 152
+```
+
+| 检查项 | 期望 | 实测 |
+|--------|------|------|
+| `datasets/lasher/testingset` | 245 | ⬜ |
+| `datasets/lasher/trainingset` | 979 | ⬜ |
+| `datasets/visevent/trainingset` | 500 | ⬜ |
+| `datasets/visevent/testingset` | 320 | ⬜ |
+| `downloads/depthtrack/train/*.zip` | 152 | ⬜ |
+
+> ★ VisEvent 测试集**必须有 `testlist.txt`**，缺了评测直接崩：
+> ```bash
+> cd ~/seatrack/datasets/visevent/testingset && ls -1 | grep -v '\.txt$' > testlist.txt && wc -l testlist.txt
+> ```
+
+**#5 · 找之前下的那 18GB（DepthTrack 测试集，50 个 zip / 18.27GB）→ ✅ 已找到，且已解压**
+
+原因回顾：`depthtrack_train` 出现在根目录，但测试集那 18GB 不在根目录 `ls` 里，怀疑下在了 `seatrack/` 内部或临时目录。
+
+```bash
+du -sh ~/* 2>/dev/null | sort -h | tail -20
+find ~ -maxdepth 4 -type d -iname '*depth*' 2>/dev/null
+find ~ -maxdepth 5 -name '*.zip' -printf '%h\n' 2>/dev/null | sort | uniq -c | sort -rn | head
+ls -d ~/seatrack/datasets/depthtrack/testingset 2>/dev/null && ls ~/seatrack/datasets/depthtrack/testingset | wc -l
+```
+
+实测输出（2026-10-10）：
+
+```text
+4.0K    ~/dl_lasher.py
+24K     ~/hfd.sh
+6.9G    ~/cuda-11.8
+16G     ~/zero-shot
+44G     ~/anaconda3
+565G    ~/seatrack                     ← lasher/visevent 已被挪进来，所以根目录不再显示它们
+
+~/seatrack/datasets/depthtrack                              ← 已有
+~/seatrack/SEATrack/Depthtrack_workspace
+~/seatrack/SEATrack/SEATrack-main/Depthtrack_workspace      ← ★ 嵌套，见 #6
+~/seatrack/downloads/depthtrack
+      2 ~/seatrack/datasets/visevent/VisEvent_dataset       ← 2 个 zip，未解压
+      1 ~/seatrack/downloads/depthtrack/train               ← 1 个 zip
+      1 ~/seatrack/downloads/depthtrack
+      1 ~/cuda-11.8/nsightee_plugins
+~/seatrack/datasets/depthtrack/testingset
+50                                     ← ✅ 正好 50，18GB 已解压到位
+```
+
+→ 结论：**18GB 不用重下**，`~/seatrack/datasets/depthtrack/testingset` 已有 50 个序列。
+→ 待办：把这 50 个序列**再拷一份**到 `~/seatrack/SEATrack/Depthtrack_workspace/sequences/`，并和 `list.txt` 的 50 个名字对上。
+→ 附带发现：`~/seatrack` 已占 **565G**，且 `downloads/` 与 `datasets/` 可能同时存在原始压缩包和解压结果（重复占盘），后续注意清理。
+
+**#6 · ★ 新发现：代码仓疑似嵌套 `SEATrack/SEATrack-main/`**
+
+`find` 结果里出现 `~/seatrack/SEATrack/SEATrack-main/Depthtrack_workspace`，说明当年上传时把 `SEATrack-main` 放进了已存在的 `SEATrack/` 目录里，形成两层。
+
+→ 影响：Step 1 的 `CODE` 到底指哪一层必须定死，否则 Step 3 生成的 `local.py`、Step 6 的 `sed` 全改错地方。
+→ 处理原则（待用户执行 #7 的 B 命令确认后定）：**保留唯一一层**，把有用的内容合并到 `~/seatrack/SEATrack/`，删掉空的 `SEATrack-main` 外壳；或反过来把 `SEATrack-main` 提上来做 `CODE`。
+
+**#7 · 下一步待执行的确认命令**
+
+```bash
+# A. seatrack 内部全貌
+ls ~/seatrack; ls ~/seatrack/datasets; du -sh ~/seatrack/datasets/* 2>/dev/null
+
+# B. ★ 确认代码仓嵌套情况（决定 CODE 用哪一层）
+ls ~/seatrack/SEATrack; echo ---; ls ~/seatrack/SEATrack/SEATrack-main | head
+du -sh ~/seatrack/SEATrack ~/seatrack/SEATrack/SEATrack-main
+
+# C. lasher 层级与数量（期望 testingset 245 / trainingset 979）
+ls ~/seatrack/datasets/lasher
+ls ~/seatrack/datasets/lasher/testingset | wc -l
+ls ~/seatrack/datasets/lasher/trainingset | wc -l
+
+# D. depthtrack 测试集内容校验（期望 color/ depth/ groundtruth.txt，帧名 8 位补零）
+ls ~/seatrack/datasets/depthtrack/testingset | head -3
+ls ~/seatrack/datasets/depthtrack/testingset/$(ls ~/seatrack/datasets/depthtrack/testingset | head -1)
+
+# E. visevent 2 个压缩包 + depthtrack 训练 1 个压缩包
+ls -lh ~/seatrack/datasets/visevent/VisEvent_dataset/
+ls -lh ~/seatrack/downloads/depthtrack/ ~/seatrack/downloads/depthtrack/train/
+df -h ~
+```
+
+**#8 · 待办**
+
+- [ ] 跑 #7 的 A~E，把输出贴回来填进本日志
+- [ ] 定死 `CODE`（先解决 #6 的嵌套），再进 Step 2
+- [ ] 解压 `datasets/visevent/VisEvent_dataset/` 下 2 个 zip → `datasets/visevent/{trainingset,testingset}`，并补 `testlist.txt`（320）
+- [ ] 解压 `downloads/depthtrack/train/` 的 zip → `datasets/depthtrack/trainingset`（152；**仅 Step 9 自训练才需要，可暂缓**）
+- [ ] DepthTrack 测试集再拷一份到 `SEATrack/Depthtrack_workspace/sequences/`（50，与 `list.txt` 对齐）
+- [ ] 继续 Step 1~4（放代码 / conda / 路径配置 / 权重）
+
+---
 
 ## 说明
 

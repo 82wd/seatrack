@@ -1,0 +1,423 @@
+{
+  "sha": "c30908779d58404ce932abdbdb68a4dfcd07e684",
+  "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/c30908779d58404ce932abdbdb68a4dfcd07e684",
+  "tree": [
+    {
+      "path": "Evaluate_VisEvent_SOT_benchmark.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f6f7022fd0afff812cd21a1c5832611eca99941e",
+      "size": 7068,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/f6f7022fd0afff812cd21a1c5832611eca99941e"
+    },
+    {
+      "path": "Event_Tracking_Paper_List.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b00d84781b90db3d2c29dfe0773af6ecabcc5d9a",
+      "size": 12945,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/b00d84781b90db3d2c29dfe0773af6ecabcc5d9a"
+    },
+    {
+      "path": "License",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "261d48da299461149191de29b8df21fb9a6fe050",
+      "size": 1066,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/261d48da299461149191de29b8df21fb9a6fe050"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ba463b102b3d480919c8a616f267d9434dbcda0a",
+      "size": 11174,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ba463b102b3d480919c8a616f267d9434dbcda0a"
+    },
+    {
+      "path": "Screenshot from 2021-08-27 08-57-19.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "09d889932b36e7afe3e1b0b7300df7e87114ec95",
+      "size": 24208,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/09d889932b36e7afe3e1b0b7300df7e87114ec95"
+    },
+    {
+      "path": "Screenshot from 2021-08-27 09-08-23.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e7ae04c978cd5eb1f2c249c3b2d70099765540c4",
+      "size": 6713,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/e7ae04c978cd5eb1f2c249c3b2d70099765540c4"
+    },
+    {
+      "path": "Screenshot from 2021-08-27 12-29-25.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ef76bbdea65e8666ccf43be5b9b006777338a06c",
+      "size": 29206,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ef76bbdea65e8666ccf43be5b9b006777338a06c"
+    },
+    {
+      "path": "aedat4HARDVS_list.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "49a28997249e04571d1e58a35e59a384697c8417",
+      "size": 4629,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/49a28997249e04571d1e58a35e59a384697c8417"
+    },
+    {
+      "path": "annos",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "fb71343445eacb7d90aa449c60561b1a8cc6a3c2",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/fb71343445eacb7d90aa449c60561b1a8cc6a3c2"
+    },
+    {
+      "path": "annos/annos.zip",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fce4c1478e0d6aaf871929c50186f051dfac9e0a",
+      "size": 1516662,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/fce4c1478e0d6aaf871929c50186f051dfac9e0a"
+    },
+    {
+      "path": "event2frame_code",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0aff6ba064835f7f09c45a094461809ca6790200",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/0aff6ba064835f7f09c45a094461809ca6790200"
+    },
+    {
+      "path": "event2frame_code/1_davis_to_images.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ca2205e6657037f91b0b41e46487f24c339d9dec",
+      "size": 7992,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ca2205e6657037f91b0b41e46487f24c339d9dec"
+    },
+    {
+      "path": "event2frame_code/2_davis_to_images_nfs_dataset.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "537bfa4f958759588eab370178d5905bc400904f",
+      "size": 8915,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/537bfa4f958759588eab370178d5905bc400904f"
+    },
+    {
+      "path": "event2frame_code/3_zhu_lin_read.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1291d35ccc15d71f9d570223c60ad975dd7af1d1",
+      "size": 4535,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/1291d35ccc15d71f9d570223c60ad975dd7af1d1"
+    },
+    {
+      "path": "event2frame_code/davis_to_hdf5.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bb36725b1e725563f5680374b81abf8efab1bb49",
+      "size": 3893,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/bb36725b1e725563f5680374b81abf8efab1bb49"
+    },
+    {
+      "path": "event2frame_code/read_davis346.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ed24ace82f624d3c908f622ae576116c5f78a190",
+      "size": 4156,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ed24ace82f624d3c908f622ae576116c5f78a190"
+    },
+    {
+      "path": "event2frame_code/work_read_davis_hdf5.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ac25449443679cbde01aa7fb38d841b14166c43b",
+      "size": 4583,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ac25449443679cbde01aa7fb38d841b14166c43b"
+    },
+    {
+      "path": "event_representations.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4580bf25fade894596ccacbb77c064b90c66a7dc",
+      "size": 380586,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/4580bf25fade894596ccacbb77c064b90c66a7dc"
+    },
+    {
+      "path": "figures",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "de1c6e6f756208ba1dc6d928055ba6483497428c",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/de1c6e6f756208ba1dc6d928055ba6483497428c"
+    },
+    {
+      "path": "figures/visevent_art.jpg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9d5c4794f0b85484f4537591c8e604d8732d4bcf",
+      "size": 81126,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/9d5c4794f0b85484f4537591c8e604d8732d4bcf"
+    },
+    {
+      "path": "figures/visevent_baselines.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f1d74fa5abba21f0079837aca55f4ae74becc319",
+      "size": 55676,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/f1d74fa5abba21f0079837aca55f4ae74becc319"
+    },
+    {
+      "path": "figures/visevent_demoIMG.jpg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a2cebf8d280141ab5738ab9fb4ef2c6e92cf3b42",
+      "size": 549667,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/a2cebf8d280141ab5738ab9fb4ef2c6e92cf3b42"
+    },
+    {
+      "path": "figures/visevent_tutorial.jpg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f3e688c9fbdadb7ef7b4d5ad012e59ce0481b742",
+      "size": 698939,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/f3e688c9fbdadb7ef7b4d5ad012e59ce0481b742"
+    },
+    {
+      "path": "res_fig",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "69feda988d784b16d9607742a2b01047eccb4f86",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/69feda988d784b16d9607742a2b01047eccb4f86"
+    },
+    {
+      "path": "res_fig/VisEvent_benchmark_results.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2c7f5e8ecf1e923edb2eca66eaf21e0b21b4df97",
+      "size": 707695,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/2c7f5e8ecf1e923edb2eca66eaf21e0b21b4df97"
+    },
+    {
+      "path": "res_fig/event_representations.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4580bf25fade894596ccacbb77c064b90c66a7dc",
+      "size": 380586,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/4580bf25fade894596ccacbb77c064b90c66a7dc"
+    },
+    {
+      "path": "res_fig/readme.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8215bbe889c5b16af342a22c309d9d80758973ce",
+      "size": 45,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/8215bbe889c5b16af342a22c309d9d80758973ce"
+    },
+    {
+      "path": "scripts",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "b29b75db86b94bb95007e0183ea8046779bf9bac",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/b29b75db86b94bb95007e0183ea8046779bf9bac"
+    },
+    {
+      "path": "scripts/count_VisEvent_tracking_dataset_img_NUM.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fac7962fd1e1507450fd1eab2ad73c9eb13adf6d",
+      "size": 7433,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/fac7962fd1e1507450fd1eab2ad73c9eb13adf6d"
+    },
+    {
+      "path": "scripts/earlyfusion_img_generation_visEvent_tracking.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ddc286ae1ee87cdd97b4d77e225e739ed4066287",
+      "size": 1481,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ddc286ae1ee87cdd97b4d77e225e739ed4066287"
+    },
+    {
+      "path": "scripts/environments.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "453f7cfc398afbc9ba131d2b8db0cc2302c50d5a",
+      "size": 331,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/453f7cfc398afbc9ba131d2b8db0cc2302c50d5a"
+    },
+    {
+      "path": "scripts/load_dianwokeji_json_file.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "02e6ccee3e0ba0ff7bde21bdab746a757db30ac9",
+      "size": 3591,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/02e6ccee3e0ba0ff7bde21bdab746a757db30ac9"
+    },
+    {
+      "path": "scripts/load_json_to_txt.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ad7a665a9b76a227bcf0a7c7738433ef23b13c6b",
+      "size": 1112,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ad7a665a9b76a227bcf0a7c7738433ef23b13c6b"
+    },
+    {
+      "path": "scripts/prepare_VisEvent_train_data.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "41833c5e4dc01c8959044f31c345092d5dd87023",
+      "size": 1371,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/41833c5e4dc01c8959044f31c345092d5dd87023"
+    },
+    {
+      "path": "scripts/process_FE108_dataset.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "364c7721ffe472cee2f9c143eee5f19eefadbb23",
+      "size": 1337,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/364c7721ffe472cee2f9c143eee5f19eefadbb23"
+    },
+    {
+      "path": "scripts/read_aedat4.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b9392569a3ec4b67d3f6b5203f99d11f2958df03",
+      "size": 7842,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/b9392569a3ec4b67d3f6b5203f99d11f2958df03"
+    },
+    {
+      "path": "scripts/start_frame_idx_FE108.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8fde9767dfb3c310acf7207c791fbdec3a12e681",
+      "size": 1595,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/8fde9767dfb3c310acf7207c791fbdec3a12e681"
+    },
+    {
+      "path": "sequence_evaluation_config",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "f224bad1228d11a5d97abd5e1bfab026174bf56a",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/f224bad1228d11a5d97abd5e1bfab026174bf56a"
+    },
+    {
+      "path": "sequence_evaluation_config/VisEvent_testing_subset.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5b10c9f355d0c6d9ce96c68dc9e9b6a01a8df13c",
+      "size": 8769,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/5b10c9f355d0c6d9ce96c68dc9e9b6a01a8df13c"
+    },
+    {
+      "path": "sequence_evaluation_config/VisEvent_train_subset_ALL.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3a6a3399ea95a8208ae998a6053d7e6ce1c7ba62",
+      "size": 7372,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/3a6a3399ea95a8208ae998a6053d7e6ce1c7ba62"
+    },
+    {
+      "path": "sequence_evaluation_config/VisEvent_train_subset_aedat4_only.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "edd0545df6c0ca1f73bacc7f3f73c2eb995a5dcb",
+      "size": 5701,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/edd0545df6c0ca1f73bacc7f3f73c2eb995a5dcb"
+    },
+    {
+      "path": "tracking_results",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "9ff3027c929275850c084a48f89fa361a922f5e1",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/9ff3027c929275850c084a48f89fa361a922f5e1"
+    },
+    {
+      "path": "tracking_results/readme.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0a1554971a6e65e33944e0751e198107929edbb5",
+      "size": 170,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/0a1554971a6e65e33944e0751e198107929edbb5"
+    },
+    {
+      "path": "utils",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "b59921a8720305389b45c5b3b188a3e79146b918",
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/trees/b59921a8720305389b45c5b3b188a3e79146b918"
+    },
+    {
+      "path": "utils/calc_rect_int.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b7595e0bd169686bb5aa0f590c3738c72cd06968",
+      "size": 504,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/b7595e0bd169686bb5aa0f590c3738c72cd06968"
+    },
+    {
+      "path": "utils/calc_seq_err_robust.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ea45dbfe7488d1c9f3238602008fa077a694bc60",
+      "size": 1919,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/ea45dbfe7488d1c9f3238602008fa077a694bc60"
+    },
+    {
+      "path": "utils/config_plot_style.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "91b7ef689a8806923df87b6c0835fe9bf7ffe315",
+      "size": 3602,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/91b7ef689a8806923df87b6c0835fe9bf7ffe315"
+    },
+    {
+      "path": "utils/config_sequence.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fcd976f08ead7a14bc37d73195781b51517136f9",
+      "size": 748,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/fcd976f08ead7a14bc37d73195781b51517136f9"
+    },
+    {
+      "path": "utils/config_tracker.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "77aa1c85a445234b239d45a89fa37cb7e538a761",
+      "size": 4816,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/77aa1c85a445234b239d45a89fa37cb7e538a761"
+    },
+    {
+      "path": "utils/eval_tracker.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3b7ab6d76ffbded0b5a7f00062424125ddd6d896",
+      "size": 3205,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/3b7ab6d76ffbded0b5a7f00062424125ddd6d896"
+    },
+    {
+      "path": "utils/plot_draw_save.m",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c15ac7968b83ed6672df341d2e75edd036d540f9",
+      "size": 2800,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/c15ac7968b83ed6672df341d2e75edd036d540f9"
+    },
+    {
+      "path": "videosamples.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fb69e319006ab3b9810253e8777b742e84cd10c1",
+      "size": 4346750,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/fb69e319006ab3b9810253e8777b742e84cd10c1"
+    },
+    {
+      "path": "visevent_art.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "42eb85c0fb92f369df2703c9a73b28cf2cee13c0",
+      "size": 62209,
+      "url": "https://api.github.com/repos/wangxiao5791509/VisEvent_SOT_Benchmark/git/blobs/42eb85c0fb92f369df2703c9a73b28cf2cee13c0"
+    }
+  ],
+  "truncated": false
+}

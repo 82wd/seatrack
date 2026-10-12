@@ -193,7 +193,7 @@ if __name__ == '__main__':
             pool.starmap(run_sequence, sequence_list)
     else:
         seq_list = [args.video] if args.video != '' else seq_list
-        sequence_list = [(s, seq_home, dataset_name, args.yaml_name, args.num_gpus, args.epoch, args.debug, args.script_name) for s in seq_list]
+        sequence_list = [(s, seq_home, dataset_name, args.yaml_name, args.num_gpus, args.epoch, args.debug, args.script_name, args.variants, args.hmoe_rank, args.amglora_rank) for s in seq_list]
         for seqlist in sequence_list:
             run_sequence(*seqlist)
     print(f"Totally cost {time.time()-start} seconds!")

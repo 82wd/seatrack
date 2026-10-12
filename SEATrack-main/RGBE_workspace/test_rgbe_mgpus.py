@@ -4,9 +4,9 @@ import sys
 from os.path import join, isdir, abspath, dirname
 import numpy as np
 import argparse
-prj = join(dirname(__file__), '..')
+prj = abspath(join(dirname(__file__), '..'))
 if prj not in sys.path:
-    sys.path.append(prj)
+    sys.path.insert(0, prj)
 
 from lib.test.tracker.seatrack import SEATrack
 import lib.test.parameter.seatrack as rgbe_prompt_params
@@ -39,8 +39,7 @@ def run_sequence(seq_name, seq_home, dataset_name, yaml_name, num_gpu=1, epoch=6
     seq_txt = seq_name
     save_folder = f'./RGBE_workspace/{variants}/{dataset_name}/'
     save_path = save_folder + seq_txt + '.txt'
-    if not os.path.exists(save_folder):
-        os.makedirs(save_folder)
+    os.makedirs(save_folder, exist_ok=True)
     if os.path.exists(save_path):
         print(f'-1 {seq_name}')
         return
@@ -85,7 +84,9 @@ def run_sequence(seq_name, seq_home, dataset_name, yaml_name, num_gpu=1, epoch=6
             result[frame_idx] = np.array(region)
         toc += cv2.getTickCount() - tic
     toc /= cv2.getTickFrequency()
-    np.savetxt(save_path, result, fmt='%.14f', delimiter=',')
+    temporary_path = save_path + '.tmp'
+    np.savetxt(temporary_path, result, fmt='%.14f', delimiter=',')
+    os.replace(temporary_path, save_path)
     print('{} , fps:{}'.format(seq_name, frame_idx / toc))
 
 
@@ -113,6 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('--script_name', type=str, default='', help='Name of tracking method(ostrack, prompt, ftuning).')
     parser.add_argument('--yaml_name', type=str, default='', help='Name of tracking method.')
     parser.add_argument('--dataset_name', type=str, default='VisEvent', help='Name of dataset (VisEvent).')
+    parser.add_argument('--data_root', default='/data/visevent/testingset', help='VisEvent testingset directory')
     parser.add_argument('--threads', default=30, type=int, help='Number of threads')
     parser.add_argument('--num_gpus', default=torch.cuda.device_count(), type=int, help='Number of gpus')
     parser.add_argument('--epoch', default="", type=str, help='epochs of ckpt')
@@ -130,7 +132,7 @@ if __name__ == '__main__':
     # path initialization
     seq_list = None
     if dataset_name == 'VisEvent':
-        seq_home = '/data/visevent/testingset'
+        seq_home = args.data_root
         with open(join(seq_home, 'testlist.txt'), 'r') as f:
             seq_list = f.read().splitlines()
         seq_list.sort()
@@ -145,7 +147,7 @@ if __name__ == '__main__':
             pool.starmap(run_sequence, sequence_list)
     else:
         seq_list = [args.video] if args.video != '' else seq_list
-        sequence_list = [(s, seq_home, dataset_name, args.yaml_name, args.num_gpus, args.epoch, args.debug, args.script_name) for s in seq_list]
+        sequence_list = [(s, seq_home, dataset_name, args.yaml_name, args.num_gpus, args.epoch, args.debug, args.script_name, args.variants, args.hmoe_rank, args.amglora_rank) for s in seq_list]
         for seqlist in sequence_list:
             run_sequence(*seqlist)
     print(f"Totally cost {time.time()-start} seconds!")

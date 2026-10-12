@@ -1,0 +1,1616 @@
+2026-10-10T15:56:14+00:00
+[32mChecking for new version[0m
+[33mA newer version of the VOT toolkit is available (0.9.0), please update.[0m
+2 %
+4 %
+6 %
+8 %
+10 %
+12 %
+14 %
+16 %
+18 %
+20 %
+22 %
+24 %
+26 %
+28 %
+30 %
+32 %
+34 %
+36 %
+38 %
+40 %
+42 %
+44 %
+46 %
+48 %
+50 %
+52 %
+54 %
+56 %
+58 %
+60 %
+62 %
+64 %
+66 %
+68 %
+70 %
+72 %
+74 %
+76 %
+78 %
+80 %
+82 %
+84 %
+86 %
+88 %
+90 %
+92 %
+94 %
+96 %
+98 %
+100 %
+Loaded workspace in './'[0m
+[32mScanning registry /nas/liziyan103/seatrack/SEATrack/Depthtrack_workspace/trackers.ini[0m
+[32mFound 1 trackers[0m
+Found data for 1 trackers[0m
+Evaluating tracker rgbd[0m
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+[31mTracker rgbd encountered an error: Unable to connect to tracker[0m
+[32mUnable to connect to tracker[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/tracker/trax.py", line 422, in initialize
+    self._connect()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/tracker/trax.py", line 376, in _connect
+    self._process = TrackerProcess(self._command, self._envvars, log=log, socket=self._socket, timeout=self._timeout)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/tracker/trax.py", line 194, in __init__
+    raise e
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/tracker/trax.py", line 188, in __init__
+    self._client = Client(
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/trax/client.py", line 81, in __init__
+    raise TraxException("Unable to connect to tracker")
+trax.TraxException: Unable to connect to tracker
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/experiment/__init__.py", line 160, in run_experiment
+    experiment.execute(tracker, sequence, force=force, callback=progress)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/experiment/multirun.py", line 79, in execute
+    _, properties, elapsed = runtime.initialize(sequence.frame(0), self._get_initialization(sequence, 0))
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/tracker/trax.py", line 431, in initialize
+    self._error(e)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/tracker/trax.py", line 408, in _error
+    raise TrackerException(exception, tracker=self._tracker, \
+vot.tracker.TrackerException: Unable to connect to tracker
+[31mTracker output written to file: /nas/liziyan103/seatrack/SEATrack/Depthtrack_workspace/logs/rgbd_2026-10-10T15-56-23.769632.log[0m
+[31mEvaluation interrupted by tracker error: ('Experiment interrupted', TrackerException(TraxException('Unable to connect to tracker')))[0m
+[32mChecking for new version[0m
+[33mA newer version of the VOT toolkit is available (0.9.0), please update.[0m
+2 %
+4 %
+6 %
+8 %
+10 %
+12 %
+14 %
+16 %
+18 %
+20 %
+22 %
+24 %
+26 %
+28 %
+30 %
+32 %
+34 %
+36 %
+38 %
+40 %
+42 %
+44 %
+46 %
+48 %
+50 %
+52 %
+54 %
+56 %
+58 %
+60 %
+62 %
+64 %
+66 %
+68 %
+70 %
+72 %
+74 %
+76 %
+78 %
+80 %
+82 %
+84 %
+86 %
+88 %
+90 %
+92 %
+94 %
+96 %
+98 %
+100 %
+Loaded workspace in './'[0m
+[32mScanning registry /nas/liziyan103/seatrack/SEATrack/Depthtrack_workspace/trackers.ini[0m
+[32mFound 1 trackers[0m
+Found data for 1 trackers[0m
+[32mRunning analysis for 1 trackers[0m
+[32mSetting default analysis processor for thread MainThread[0m
+[32mTraversing experiment rgbd-unsupervised[0m
+[32mTraversing analysis vot.analysis.tpr.PrecisionRecall[0m
+[32mAdding analysis task ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurves@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurve@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurves@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurve@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.FScoreCurve@99547f878dc3030752712be6ec42dad350e23514', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecall@99547f878dc3030752712be6ec42dad350e23514', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[31mError during analysis ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', 'rgbd', 'adapter01_indoor')[0m
+[31mNone[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 336, in __call__
+    return self._analysis.compute(self._experiment, self._trackers, self._sequences, dependencies)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/__init__.py", line 357, in compute
+    return Grid.scalar(self.subcompute(experiment, trackers[0], sequences[0], dependencies))
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 76, in subcompute
+    raise MissingResultsException("Missing results for sequence {}".format(sequence.name))
+vot.analysis.MissingResultsException: Missing results for sequence adapter01_indoor
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 338, in __call__
+    raise AnalysisError(cause=e, task=self._key)
+vot.analysis._processor.AnalysisError: Error during analysis ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', 'rgbd', 'adapter01_indoor')
+[32mTraversing analysis vot.analysis.tpr.PrecisionRecallCurve[0m
+[32mAdding analysis task ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurves@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurve@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mTraversing analysis vot.analysis.tpr.FScoreCurve[0m
+[32mAdding analysis task ('vot.analysis.tpr.FScoreCurve@99547f878dc3030752712be6ec42dad350e23514', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mWaiting for 266 analysis tasks to finish[0m
+60 %
+[31mError during analysis ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', 'rgbd', 'adapter01_indoor')[0m
+[31mNone[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 336, in __call__
+    return self._analysis.compute(self._experiment, self._trackers, self._sequences, dependencies)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/__init__.py", line 357, in compute
+    return Grid.scalar(self.subcompute(experiment, trackers[0], sequences[0], dependencies))
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 76, in subcompute
+    raise MissingResultsException("Missing results for sequence {}".format(sequence.name))
+vot.analysis.MissingResultsException: Missing results for sequence adapter01_indoor
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 338, in __call__
+    raise AnalysisError(cause=e, task=self._key)
+vot.analysis._processor.AnalysisError: Error during analysis ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', 'rgbd', 'adapter01_indoor')
+[31mError during analysis ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', 'rgbd', 'adapter01_indoor')[0m
+[31mNone[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 336, in __call__
+    return self._analysis.compute(self._experiment, self._trackers, self._sequences, dependencies)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/__init__.py", line 357, in compute
+    return Grid.scalar(self.subcompute(experiment, trackers[0], sequences[0], dependencies))
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 76, in subcompute
+    raise MissingResultsException("Missing results for sequence {}".format(sequence.name))
+vot.analysis.MissingResultsException: Missing results for sequence adapter01_indoor
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 338, in __call__
+    raise AnalysisError(cause=e, task=self._key)
+vot.analysis._processor.AnalysisError: Error during analysis ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', 'rgbd', 'adapter01_indoor')
+100 %
+[31m'NoneType' object is not subscriptable[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/utilities/cli.py", line 390, in main
+    do_analysis(args)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/utilities/cli.py", line 253, in do_analysis
+    generate_document(config.format, workspace.report, trackers, workspace.dataset, results, storage)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/document/__init__.py", line 383, in generate_document
+    generate_html_document(trackers, sequences, results, storage)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/document/html.py", line 87, in generate_html_document
+    plots = extract_plots(trackers, results)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/document/common.py", line 110, in extract_plots
+    values = aresults[t, 0]
+TypeError: 'NoneType' object is not subscriptable
+2026-10-10T15:57:26+00:00
+[32mChecking for new version[0m
+[33mA newer version of the VOT toolkit is available (0.9.0), please update.[0m
+2 %
+4 %
+6 %
+8 %
+10 %
+12 %
+14 %
+16 %
+18 %
+20 %
+22 %
+24 %
+26 %
+28 %
+30 %
+32 %
+34 %
+36 %
+38 %
+40 %
+42 %
+44 %
+46 %
+48 %
+50 %
+52 %
+54 %
+56 %
+58 %
+60 %
+62 %
+64 %
+66 %
+68 %
+70 %
+72 %
+74 %
+76 %
+78 %
+80 %
+82 %
+84 %
+86 %
+88 %
+90 %
+92 %
+94 %
+96 %
+98 %
+100 %
+Loaded workspace in './'[0m
+[32mScanning registry /nas/liziyan103/seatrack/SEATrack/Depthtrack_workspace/trackers.ini[0m
+[32mFound 1 trackers[0m
+Found data for 1 trackers[0m
+Evaluating tracker rgbd[0m
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+2 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+4 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+6 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+8 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+10 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+12 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+14 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+16 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+18 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+20 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+22 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+24 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+26 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+28 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+30 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+32 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+34 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+36 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+38 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+40 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+42 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+44 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+46 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+48 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+50 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+52 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+54 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+56 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+58 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+60 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+62 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+64 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+66 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+68 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+70 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+72 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+74 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+76 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+78 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+80 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+82 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+84 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+86 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+88 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+90 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+92 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+94 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+96 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+98 %
+[32mRunning process: /nas/liziyan103/anaconda3/envs/seatrack/bin/python -m seatrack_baseline[0m
+100 %
+Evaluation concluded successfuly[0m
+PASS: 50 sequences, trajectory/confidence/time lengths match ground truth.
+[32mChecking for new version[0m
+[32mUnable to retrieve version information HTTPSConnectionPool(host='github.com', port=443): Max retries exceeded with url: /votchallenge/vot-toolkit-python/raw/master/vot/version.py (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x718c52e04bb0>, 'Connection to github.com timed out. (connect timeout=2)'))[0m
+2 %
+4 %
+6 %
+8 %
+10 %
+12 %
+14 %
+16 %
+18 %
+20 %
+22 %
+24 %
+26 %
+28 %
+30 %
+32 %
+34 %
+36 %
+38 %
+40 %
+42 %
+44 %
+46 %
+48 %
+50 %
+52 %
+54 %
+56 %
+58 %
+60 %
+62 %
+64 %
+66 %
+68 %
+70 %
+72 %
+74 %
+76 %
+78 %
+80 %
+82 %
+84 %
+86 %
+88 %
+90 %
+92 %
+94 %
+96 %
+98 %
+100 %
+Loaded workspace in './'[0m
+[32mScanning registry /nas/liziyan103/seatrack/SEATrack/Depthtrack_workspace/trackers.ini[0m
+[32mFound 1 trackers[0m
+Found data for 1 trackers[0m
+[32mRunning analysis for 1 trackers[0m
+[32mSetting default analysis processor for thread MainThread[0m
+[32mTraversing experiment rgbd-unsupervised[0m
+[32mTraversing analysis vot.analysis.tpr.PrecisionRecall[0m
+[32mAdding analysis task ('vot.analysis.tpr._ConfidenceScores@da39a3ee5e6b4b0d3255bfef95601890afd80709', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurves@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecallCurve@705b91055c85a91a766d2154f88492db0054e39a', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.FScoreCurve@99547f878dc3030752712be6ec42dad350e23514', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mAdding analysis task ('vot.analysis.tpr.PrecisionRecall@99547f878dc3030752712be6ec42dad350e23514', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[32mTraversing analysis vot.analysis.tpr.PrecisionRecallCurve[0m
+[32mTraversing analysis vot.analysis.tpr.FScoreCurve[0m
+[32mWaiting for 106 analysis tasks to finish[0m
+5 %
+[31mError during analysis ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[31mNone[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 318, in __call__
+    return self._analysis.compute(self._experiment, self._trackers, self._sequences, dependencies)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/__init__.py", line 394, in compute
+    transformed_results[i, 0] = self.aggregate(tracker, sequences, results.row(i))
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 104, in aggregate
+    thresholds = determine_thresholds(itertools.chain(*[result[0] for result in results]), self.resolution),
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 24, in determine_thresholds
+    idxs = np.round(np.linspace(delta, len(scores) - delta, num=resolution - 2)).astype(np.int)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/numpy/__init__.py", line 305, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'int'.
+`np.int` was a deprecated alias for the builtin `int`. To avoid this error in existing code, use `int` by itself. Doing this will not modify any behavior and is safe. When replacing `np.int`, you may wish to use e.g. `np.int64` or `np.int32` to specify the precision. If you wish to review your current use, check the release note link for additional information.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 320, in __call__
+    raise AnalysisError(cause=e, task=self._key)
+vot.analysis._processor.AnalysisError: Error during analysis ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')
+[31mError during analysis ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[31mNone[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 318, in __call__
+    return self._analysis.compute(self._experiment, self._trackers, self._sequences, dependencies)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/__init__.py", line 394, in compute
+    transformed_results[i, 0] = self.aggregate(tracker, sequences, results.row(i))
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 104, in aggregate
+    thresholds = determine_thresholds(itertools.chain(*[result[0] for result in results]), self.resolution),
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 24, in determine_thresholds
+    idxs = np.round(np.linspace(delta, len(scores) - delta, num=resolution - 2)).astype(np.int)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/numpy/__init__.py", line 305, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'int'.
+`np.int` was a deprecated alias for the builtin `int`. To avoid this error in existing code, use `int` by itself. Doing this will not modify any behavior and is safe. When replacing `np.int`, you may wish to use e.g. `np.int64` or `np.int32` to specify the precision. If you wish to review your current use, check the release note link for additional information.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 320, in __call__
+    raise AnalysisError(cause=e, task=self._key)
+vot.analysis._processor.AnalysisError: Error during analysis ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')
+[31mError during analysis ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')[0m
+[31mNone[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 318, in __call__
+    return self._analysis.compute(self._experiment, self._trackers, self._sequences, dependencies)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/__init__.py", line 394, in compute
+    transformed_results[i, 0] = self.aggregate(tracker, sequences, results.row(i))
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 104, in aggregate
+    thresholds = determine_thresholds(itertools.chain(*[result[0] for result in results]), self.resolution),
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/tpr.py", line 24, in determine_thresholds
+    idxs = np.round(np.linspace(delta, len(scores) - delta, num=resolution - 2)).astype(np.int)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/numpy/__init__.py", line 305, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'int'.
+`np.int` was a deprecated alias for the builtin `int`. To avoid this error in existing code, use `int` by itself. Doing this will not modify any behavior and is safe. When replacing `np.int`, you may wish to use e.g. `np.int64` or `np.int32` to specify the precision. If you wish to review your current use, check the release note link for additional information.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 614, in insert
+    container[key] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 282, in _on_result
+    self._results[i] = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 468, in _future_done
+    result = future.result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/analysis/_processor.py", line 320, in __call__
+    raise AnalysisError(cause=e, task=self._key)
+vot.analysis._processor.AnalysisError: Error during analysis ('vot.analysis.tpr._Thresholds@bd1eaeb2f294f70e048fc56c2e751d18a3de1ce4', 'rgbd-unsupervised', '8f7eeffabbbf5cf5fade4437e6a2c86e62749359', '3f24b479a9b15f769738d3f36f5ebc8b29c36ecf')
+100 %
+[31m'NoneType' object is not subscriptable[0m
+Traceback (most recent call last):
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/utilities/cli.py", line 390, in main
+    do_analysis(args)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/utilities/cli.py", line 253, in do_analysis
+    generate_document(config.format, workspace.report, trackers, workspace.dataset, results, storage)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/document/__init__.py", line 383, in generate_document
+    generate_html_document(trackers, sequences, results, storage)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/document/html.py", line 87, in generate_html_document
+    plots = extract_plots(trackers, results)
+  File "/nas/liziyan103/anaconda3/envs/seatrack/lib/python3.8/site-packages/vot/document/common.py", line 110, in extract_plots
+    values = aresults[t, 0]
+TypeError: 'NoneType' object is not subscriptable
