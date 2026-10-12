@@ -58,8 +58,9 @@
 | 路径 | 说明 |
 |------|------|
 | [`README.md`](./README.md) | 本文件：完整复现流程 |
+| [`Codebase讨论准备.md`](./Codebase讨论准备.md) | 源码导读、forward 流程、复现修改与源码对应关系 |
 | [`读书笔记.md`](./读书笔记.md) | 论文读书笔记：方法精读、**论文↔代码对照表**、消融解读、批判性思考 |
-| [`SEATrack-main/`](./SEATrack-main) | 官方代码（未修改，评测前需按 Step 6 改硬编码路径） |
+| [`SEATrack-main/`](./SEATrack-main) | 基于官方发布的代码，含本仓库评测修复；服务器独立训练副本的修改见源码导读 |
 | [`SEATrack_中文译文.md`](./SEATrack_中文译文.md) | 论文全文中文翻译（含表 1~8 全部实验数据） |
 | `SEATrack： Simple, Efficient, and Adaptive Multimodal Tracker.pdf` | 论文原文 |
 | `seatrack_extracted.txt` | 论文 PDF 抽取的纯文本 |

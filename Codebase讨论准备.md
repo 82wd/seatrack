@@ -1,6 +1,16 @@
-# SEATrack codebase 讨论准备
+# SEATrack 源码导读与复现修改说明
 
 核对日期：2026-10-12。依据本地源码、配置和已有复现记录；本次为静态阅读，未重新训练、评测或核验服务器当前状态。代码位置均指本地版本，服务器修补后的版本可能不同。
+
+
+## 导航
+
+- [模型与输入输出](#3-能把一次-forward-讲清楚)
+- [AMG-LoRA 与 HMoE](#4-两个核心模块究竟做了什么)
+- [训练流程](#5-训练数据可训练参数和-loss)
+- [逐帧推理](#6-推理如何从一帧走到下一帧)
+- [复现修改与源码对应关系](#9-复现修改与源码对应关系)
+- [会前阅读顺序](#10-会前一小时阅读顺序)
 
 ## 1. 开场可以怎么讲
 
@@ -24,7 +34,7 @@
 | `RGBT_workspace/`、`RGBE_workspace/`、`lib/test/vot/` | 不同数据集的评测接入 | 数据协议及结果输出 |
 | 根目录 `scripts/`、`result/`、`复现日志.md` | 本地复现辅助与证据 | 与算法实现分开理解 |
 
-上表路径除特别注明外均相对 `SEATrack-main/`。快速跳转：[模型入口](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/seatrack.py)、[双流骨干](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/vit_ci.py)、[核心 block](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py)。
+上表路径除特别注明外均相对 `SEATrack-main/`。快速跳转：[模型入口](./SEATrack-main/lib/models/seatrack/seatrack.py)、[双流骨干](./SEATrack-main/lib/models/seatrack/vit_ci.py)、[核心 block](./SEATrack-main/lib/models/layers/attn_blocks.py)。
 
 ## 3. 能把一次 forward 讲清楚
 
@@ -55,7 +65,7 @@ RGB: [B,320,768]       X: [B,320,768]
 
 ### AMG-LoRA：低秩适配 + 注意力响应对齐
 
-阅读 [attn.py:230](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py:230) 和 [attn_blocks.py:148](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py:148)。
+阅读 [attn.py:230](./SEATrack-main/lib/models/layers/attn.py#L230) 和 [attn_blocks.py:148](./SEATrack-main/lib/models/layers/attn_blocks.py#L148)。
 
 - `enable_lora=[False, True, True]`：按 Q、K、V 排列，只对 K/V 添加 LoRA。
 - `cal_qkv()` 分别计算两路的 `QKᵀ / √d` 和 V。
@@ -67,7 +77,7 @@ RGB: [B,320,768]       X: [B,320,768]
 
 ### HMoE：通过专家槽位混合 token
 
-阅读 [attn.py:67](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py:67) 和 [attn_blocks.py:187](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py:187)。
+阅读 [attn.py:67](./SEATrack-main/lib/models/layers/attn.py#L67) 和 [attn_blocks.py:187](./SEATrack-main/lib/models/layers/attn_blocks.py#L187)。
 
 - 输入先归一化并低秩投影，再将每个 token 的通道分成两个 slots。
 - Dispatch 在 token/slot 维度 softmax，将输入汇聚到专家槽位。
@@ -92,7 +102,7 @@ dataset 读取序列与标注
 
 当前 loss 为 `2 × GIoU + 5 × L1 + 1 × focal`。虽然注册了 KLDivLoss，相关跨模态 loss 的计算和加权部分已注释，因此不要说当前训练显式加入了 KL 对齐损失。
 
-[base_functions.py:171](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/train/base_functions.py:171) 用参数名字中的 `moe`、`scaling`、`lora` 筛选训练参数，其余冻结。因此 HMoE 内的 norm、gate、bias 和温度参数也包含在训练范围内；不只是低秩矩阵。预测头参数冻结，`FIX_BN` 还会让其中 BatchNorm 保持 eval 状态。
+[base_functions.py:171](./SEATrack-main/lib/train/base_functions.py#L171) 用参数名字中的 `moe`、`scaling`、`lora` 筛选训练参数，其余冻结。因此 HMoE 内的 norm、gate、bias 和温度参数也包含在训练范围内；不只是低秩矩阵。预测头参数冻结，`FIX_BN` 还会让其中 BatchNorm 保持 eval 状态。
 
 | 配置 | RGB-T | RGB-D | RGB-E |
 |---|---:|---:|---:|
@@ -107,7 +117,7 @@ dataset 读取序列与标注
 
 ## 6. 推理：如何从一帧走到下一帧
 
-阅读 [tracker/seatrack.py](/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/test/tracker/seatrack.py)。
+阅读 [tracker/seatrack.py](./SEATrack-main/lib/test/tracker/seatrack.py)。
 
 1. `initialize()`：根据首帧给定框裁剪 template 并缓存图像 tensor，保存目标状态。
 2. `track()`：根据上一帧预测框裁剪当前帧 search。
@@ -142,9 +152,75 @@ LoRA 合并状态尤其值得理解：训练器先训练，再在指定 epoch �
 - VisEvent：最新记录是 320 序列结构和数量检查通过，已给出单序列试跑命令，尚不能声称全量评测完成。
 - 自训练 RGB-D：日志记录已生成第 25 轮权重，且后续针对与官方结果相同的问题有多次修正。汇报时应连同权重对照和评测来源证据讲，不沿用早期已撤回的判断。
 
-证据入口：[结果索引](/Users/lzy/Desktop/GitHub/seatrack/result/README.md)、[复现日志](/Users/lzy/Desktop/GitHub/seatrack/复现日志.md)。
+证据入口：[结果索引](./result/README.md)、[复现日志](./复现日志.md)。
 
-## 9. 会前一小时阅读顺序
+## 9. 复现修改与源码对应关系
+
+### 9.1 阅读范围与版本区别
+
+本次复现沿用主要模型结构和训练超参数，调整集中在权重保存、运行配置及工程修复。这里的“手动调参”与训练时优化器自动更新模型权重是两回事。
+
+需要区分三个位置：
+
+- **仓库源码**：`SEATrack-main/`，包含当前入库的模型和部分评测修复。
+- **服务器 RGB-D 工程**：保存间隔改为 5 的记录来自有效配置回传；仓库中的 `rgbd.yaml` 仍是 25。
+- **服务器 RGB-T/E 独立训练副本**：由 [configure.py](./scripts/remaining_training/configure.py) 创建并修改；仓库保留修改脚本，不代表所有修改已直接写回 `SEATrack-main/`。
+
+下列链接使用 GitHub 支持的仓库相对路径与 `#L` 行号；行号对应本次整理版本。历史执行证据见 [复现日志](./复现日志.md)，独立训练设置见 [运行说明](./scripts/remaining_training/README.md)。
+
+### 9.2 已调整的配置及其执行位置
+
+| 调整 | 原值 → 复现设置 | 配置或修改入口 | 实际由哪段源码执行 | 证据范围 |
+|---|---|---|---|---|
+| RGB-D 保存间隔 | 25 → 5 轮 | [rgbd.yaml](./SEATrack-main/experiments/seatrack/rgbd.yaml#L70) 的 `TRAIN.SAVE_EPOCH_INTERVAL` | [train_script.py](./SEATrack-main/lib/train/train_script.py) 传入 settings；[BaseTrainer.train](./SEATrack-main/lib/train/trainers/base_trainer.py#L92) 判断轮次后保存 | 日志有用户回传的有效配置；仓库 YAML 仍为 25 |
+| RGB-T/E 保存间隔 | 60 / 45 → 1 轮 | [configure.py](./scripts/remaining_training/configure.py#L18) 修改独立副本 YAML | 同上，命中保存条件后调用 `save_checkpoint()` | 日志记录配置脚本已执行；不表示两项训练均已完成 |
+| RGB-E 测试轮次字段 | `TEST.EPOCH: 60` → `45` | [configure.py](./scripts/remaining_training/configure.py#L23) | [parameter/seatrack.py](./SEATrack-main/lib/test/parameter/seatrack.py) 当前仍按任务固定选择 checkpoint 路径 | 配置一致性修正；这个字段本身不能切换当前测试权重 |
+| 异常处理 | `fail_safe=True` → `False` | [configure.py](./scripts/remaining_training/configure.py#L25) 修改训练入口 | [BaseTrainer.train](./SEATrack-main/lib/train/trainers/base_trainer.py#L100) 的异常分支将错误重新抛出 | 作用于 RGB-T/E 独立副本；仓库训练入口仍为 True |
+| 训练 GPU | RGB-D 选 0、1；后续 RGB-E 选 5、6 | 启动环境 `CUDA_VISIBLE_DEVICES` | [run_task.py](./scripts/remaining_training/run_task.py#L139) 设置环境并启动两个训练进程 | 来自历史启动记录，不代表当前实时占用 |
+| 数据与输出路径 | 作者路径 → 实际数据目录和独立输出目录 | [configure.py](./scripts/remaining_training/configure.py#L12)、训练启动的 `--save_dir` | [local.py](./SEATrack-main/lib/train/admin/local.py)、[base_functions.py](./SEATrack-main/lib/train/base_functions.py) 中的数据集构建与训练保存逻辑 | 运行环境适配，不是模型结构调整 |
+
+保存间隔的含义可以直接从下面的源码理解（节选）：
+
+```python
+save_epoch_interval = getattr(self.settings, "save_epoch_interval", 1)
+save_last_n_epoch = getattr(self.settings, "save_last_n_epoch", 1)
+if epoch > (max_epochs - save_last_n_epoch) or epoch % save_epoch_interval == 0:
+    # 满足目录和主进程条件后调用 self.save_checkpoint()
+    ...
+```
+
+把间隔改为 5，就是在第 5、10、15……轮保存；改为 1，就是每轮保存。最后若干轮还有单独保存条件。这项改动本身不改变前向计算、loss 或学习率。
+
+### 9.3 保持原值的训练参数：配置如何进入源码
+
+| 参数 | RGB-D / RGB-T / RGB-E | 源码关系 |
+|---|---|---|
+| `TRAIN.EPOCH` | 25 / 60 / 45 | [train_script.py](./SEATrack-main/lib/train/train_script.py) → `trainer.train(cfg.TRAIN.EPOCH, ...)`，决定训练轮数 |
+| `TRAIN.LR` | 4e-4 / 4e-4 / 6e-5 | [get_optimizer_scheduler()](./SEATrack-main/lib/train/base_functions.py#L171) → `AdamW(..., lr=cfg.TRAIN.LR)`，决定更新步长 |
+| `TRAIN.BATCH_SIZE` | 均为每进程 32 | [build_dataloaders()](./SEATrack-main/lib/train/base_functions.py#L99) → `LTRLoader(..., batch_size=cfg.TRAIN.BATCH_SIZE)`；两进程总 batch 为 64 |
+| `TRAIN.PEFT` | 均为 True | [get_optimizer_scheduler()](./SEATrack-main/lib/train/base_functions.py#L171) 按 `moe`、`scaling`、`lora` 名称筛选可训练参数，其余冻结 |
+| `TRAIN.AMP` | 均为 False | [train_script.py](./SEATrack-main/lib/train/train_script.py) 传入 Trainer；[ltr_trainer.py](./SEATrack-main/lib/train/trainers/ltr_trainer.py) 控制 autocast 和 GradScaler |
+| `GIOU_WEIGHT` / `L1_WEIGHT` | 均为 2 / 5 | [Actor.compute_losses()](./SEATrack-main/lib/train/actors/seatrack.py#L86) 使用权重求和；focal 权重在训练入口设为 1 |
+| `DATA.TEMPLATE.SIZE` / `DATA.SEARCH.SIZE` | 均为 128 / 256 | [base_functions.py](./SEATrack-main/lib/train/base_functions.py) 将裁剪尺寸交给 [processing.py](./SEATrack-main/lib/train/data/processing.py)，并影响模型位置编码与输出特征尺寸 |
+| HMoE / AMG-LoRA rank | 4 / 8，未做取值消融 | [CEBlock_AP](./SEATrack-main/lib/models/layers/attn_blocks.py#L124) 当前直接写死这两个值；测试脚本传参修复不等于改变模型 rank |
+
+配置原文：[RGB-D](./SEATrack-main/experiments/seatrack/rgbd.yaml)、[RGB-T](./SEATrack-main/experiments/seatrack/rgbt.yaml)、[RGB-E](./SEATrack-main/experiments/seatrack/rgbe.yaml)。后续 RGB-T/E 启动还显式指定 `--seed 0`，见 [run_task.py](./scripts/remaining_training/run_task.py#L140)，没有进行随机种子扫描。
+
+### 9.4 工程修复：改的是哪段代码
+
+| 修复内容 | 对应源码 | 原因与修改范围 |
+|---|---|---|
+| sequential 分支补传参数 | [RGB-T 测试入口](./SEATrack-main/RGBT_workspace/test_rgbt_mgpus.py#L196)、[RGB-E 测试入口](./SEATrack-main/RGBE_workspace/test_rgbe_mgpus.py#L144) | 补传 `variants`、`hmoe_rank`、`amglora_rank`，避免默认空字符串导致 `int('')` 报错；两处修复已在仓库源码体现 |
+| 项目导入路径与 GPU 继承 | [VOT baseline](./SEATrack-main/lib/test/vot/seatrack_baseline.py#L1) | 项目目录优先加入 Python 搜索路径，移除内部强制选择 GPU 的语句，让子进程继承启动环境 |
+| RGB-E 数据目录可配置 | [RGB-E 测试入口](./SEATrack-main/RGBE_workspace/test_rgbe_mgpus.py#L117) | 仓库版新增 `--data_root`；日志中的服务器旧版本曾直接修正路径，不能假设两个版本接口完全相同 |
+| LasHeR 精确帧索引 | [原读取函数](./SEATrack-main/lib/train/dataset/lasher.py#L87)、[副本修改脚本](./scripts/remaining_training/configure.py#L26) | 原 `*5.jpg` 可能同时匹配 `15.jpg` 等文件；独立副本改为提取完整数值 ID、检查重复和两模态配对，再按 ID 取图；仓库原读取函数仍保留后缀匹配 |
+| 自训练 RGB-D 选权重 | [当前参数入口](./SEATrack-main/lib/test/parameter/seatrack.py)、[复现日志](./复现日志.md) | 日志记录服务器加入 `SEATRACK_RGBD_CHECKPOINT` 覆盖路径并通过参数预检；当前仓库参数文件没有该覆盖逻辑，不应宣称已入库 |
+
+### 9.5 汇报表述
+
+> 目前沿用仓库的主要模型结构和训练超参数，没有进行学习率、batch size 或 rank 的精度调参。复现中主要调整了权重保存间隔、GPU 与文件路径，并修复了参数传递、帧读取和评测接入问题。其中一部分修复直接在仓库源码中，另一部分由配置脚本作用于服务器独立训练副本，文档中分别标明了位置和证据。
+
+## 10. 会前一小时阅读顺序
 
 1. 10 分钟：看 `rgbd.yaml`、模型入口，记住输入、输出、冻结策略。
 2. 15 分钟：看 `vit_ci.forward_features()`，把维度和共享参数画出来。
