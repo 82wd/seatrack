@@ -178,8 +178,7 @@ class VisionTransformerCE(VisionTransformer):
         lens_x = self.pos_embed_x.shape[1]
 
         # 【索引与 CE】下面记录原始空间位置，供裁剪/恢复 token 时使用。
-        # 默认 YAML 的 CE_KEEP_RATIO=[1,1,1]，所以实际不会减少搜索 token。
-        # 不要仅因类名带 CE 就认为默认速度来自候选裁剪。
+        # 建立编号表
         global_index_t = torch.linspace(0, lens_z - 1, lens_z, dtype=torch.int64).to(x.device)
         global_index_t = global_index_t.repeat(B, 1)
 
@@ -191,6 +190,8 @@ class VisionTransformerCE(VisionTransformer):
         removed_indexes_s = []
         global_index_s = [global_rgbsearch_idx, global_dtesearch_idx]
         attns = []
+
+
         # 【变量含义变化】从这里起 x 是 [RGB特征, X特征] 的列表，已不再是输入图像。
         # 每路默认保持 [B,320,768]，依次经过 12 个 block。
         # attns 当前为空且追加被注释；return_last_attn 不能自动提供可视化所需注意力。
@@ -205,16 +206,17 @@ class VisionTransformerCE(VisionTransformer):
             x_dtes = x_dtes[:, 1:, 1:]
         # 【最后一层之后】再做 LayerNorm，然后将前 64 个模板 token 与后 256 个搜索 token 分开。
         # 模板已通过注意力影响搜索特征；预测头只需要搜索网格，不再直接接收模板。
+        # 归一化
         x_rgbs = self.norm(x[0])
         x_dtes = self.norm(x[1])
         lens_x_new = global_index_s[0].shape[1]
         lens_z_new = global_index_t.shape[1]
-
+        #拆分
         z_rgb = x_rgbs[:, :lens_z_new]
         x_rgb = x_rgbs[:, lens_z_new:]
         z_dte = x_dtes[:, :lens_z_new]         
         x_dte = x_dtes[:, lens_z_new:]
-
+        # 整理原始序列
         if removed_indexes_s and removed_indexes_s[0][0] is not None:
             removed_indexes_rgb = torch.cat([i[0]for i in removed_indexes_s], dim=1)
             removed_indexes_dte = torch.cat([i[1]for i in removed_indexes_s], dim=1)
@@ -235,6 +237,8 @@ class VisionTransformerCE(VisionTransformer):
         
         # 【论文 §3.4】逐位置逐通道相加，输出仍为 [B,256,768]。
         # 这里不是 cat：若改拼接会使通道变为 1536，预测头及预训练权重也要相应适配。
+
+        # RGB和DTE两种模态的最终特征融合
         x_fusion = x_rgb + x_dte
         aux_dict = {
             'attns': attns
