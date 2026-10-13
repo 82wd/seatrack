@@ -62,6 +62,8 @@ def render(root):
         state, ep, step, steps, frac, total, metrics, count, saved = progress(root, task, epochs)
         code = state.get('state', 'UNKNOWN')
         lines.append(name + '  |  ' + LABELS.get(code, code))
+        if task == 'rgbt' and (root / task / 'single_gpu_config.json').exists():
+            lines.append('  单卡：每批 4，累积 16 次；有效 batch=64')
         if state.get('gpus'):
             lines.append('  GPU：' + ', '.join(state['gpus']))
         if ep:
@@ -83,7 +85,10 @@ def render(root):
             age = max(0, int(time.time() - log.stat().st_mtime))
             lines.append('  训练日志最近写入：%d 分 %d 秒前' % divmod(age, 60))
         if task == 'rgbt' and code == 'WAITING_GPU':
-            lines.append('  等待 RGB-E 完成核验，再等待 GPU 5、6 余量满足条件')
+            if (root / task / 'single_gpu_config.json').exists():
+                lines.append('  在所有 GPU 中等待一张剩余显存至少 6000 MiB 的卡')
+            else:
+                lines.append('  等待 RGB-E 完成核验，再等待 GPU 5、6 余量满足条件')
         if state.get('error'):
             lines.append('  错误：' + str(state['error'])[:250])
         lines.append('-' * 68)

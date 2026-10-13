@@ -27,3 +27,9 @@
 2026-10-12 用户明确授权共用物理GPU5/6：覆盖上文完全空闲策略。现在仅考虑5/6，每卡剩余≥14000MiB、util≤20%、持续60秒；RGB-E先跑，RGB-T等RGB-E COMPLETED后跑。通过shared.sh启动，复用已有验证并重验初始化SHA，参数不变。共享卡其他任务可能动态增加占用，OOM时只处理本项目。自动跟进已同步这一授权。
 
 共用试跑实测：RGB-E已到第1轮50/937步，双rank loss正常，无OOM。总卡占用约16.2GiB。后续启动空余门槛调整为18000MiB（覆盖此前14000），RGB-T仍等RGB-E完成；不影响正在运行的RGB-E。
+
+2026-10-13 最新授权与方案（覆盖前述GPU5/6双卡队列）：用户允许所有卡共用。RGB-T改为code_single独立快照，single.sh/run_single.py启动单卡，microbatch4×accumulation16=有效batch64；保持60轮、FP32、LR0.0004，训练每轮59968样本/14992微批/937次optimizer更新，匹配原双卡drop_last消费量。每160微批打印进度，即10次更新。不能把该结果称为与双卡数值完全等价。每卡剩余至少6500MiB持续60秒才选取，PyTorch allocator限制5120MiB，其他进程不停止。若OOM将记录FAILED，不自动改精度或降batch。CPU梯度累积正确性测试已通过；实际GPU运行状态以status及training.log为准。Codex定时跟进仍暂停。
+
+单卡启动门槛最终微调为6000MiB（覆盖上文6500）；allocator仍5120MiB，其余设置不变。
+
+2026-10-13 09:45单卡RGB-T已在GPU3启动，首160/14992微批（10次参数更新）实测通过，无OOM；loss1.74887、IoU0.64857。进度面板命令不变，训练继续60轮。创建checkpoint目录的旧日志文案提及multiple GPUs属硬编码，实际LOCAL_RANK=-1单卡。
