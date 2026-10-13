@@ -164,8 +164,10 @@ z_dte = z[:, 3:, :, :]
 数学上，每个 $16\times16\times3$ 图块展平为 768 个像素数，通过一个线性映射成为 768 维 token：
 
 $$
-t_i=\operatorname{vec}(I_i)W_E+b_E.
+t_i = \mathrm{vec}(I_i) W_E + b_E
 $$
+
+纯文本对照：`第 i 个 token = 第 i 个图块展平后的向量 × 投影矩阵 W_E + 偏置 b_E`。
 
 输入像素数和输出维度恰好都为 768，但含义不同：前者是原始颜色值，后者是学出来的特征坐标。代码用卷积同时完成所有不重叠图块的映射：
 
@@ -187,10 +189,25 @@ x = x.flatten(2).transpose(1, 2)
 ### 4.3 加位置，再把模板与搜索连接
 
 $$
-Z_m=\operatorname{PatchEmbed}(I^z_m)+P_z,\quad
-C_m=\operatorname{PatchEmbed}(I^s_m)+P_s,\quad
-H_m=[Z_m;C_m]\in\mathbb R^{B\times320\times768}.
+Z_m = \mathrm{PatchEmbed}(I_m^z) + P_z
 $$
+
+$$
+C_m = \mathrm{PatchEmbed}(I_m^s) + P_s
+$$
+
+$$
+H_m = [Z_m; C_m]
+$$
+
+纯文本对照：
+
+```text
+模板特征 Z_m = PatchEmbed(模板图) + 模板位置编码 P_z
+搜索特征 C_m = PatchEmbed(搜索图) + 搜索位置编码 P_s
+拼接特征 H_m = 沿 token 维连接 Z_m 和 C_m
+H_m 的形状 = [B, 64 + 256, 768] = [B, 320, 768]
+```
 
 $m$ 代表 RGB 或 X。位置编码让模型知道 token 的空间位置；`P_z`、`P_s` 在两模态间共享。
 
@@ -367,9 +384,21 @@ elif mode == 'dte2r':
 ### 6.5 softmax 后加权 V，再做残差
 
 $$
-P_{m,ij}=\frac{\exp(S_{m,ij})}{\sum_j\exp(S_{m,ij})},\qquad
-O_m=\operatorname{ConcatHeads}(P_mV_m)W_O+b_O.
+P_{m,ij} = \frac{\exp(S_{m,ij})}{\sum_{k=1}^{L}\exp(S_{m,ik})}
 $$
+
+$$
+O_m = \mathrm{ConcatHeads}(P_m V_m) W_O + b_O
+$$
+
+纯文本对照：
+
+```text
+P[m,i,j] = exp(S[m,i,j]) / 这一行全部 key 分数的 exp 之和
+O_m = 合并各注意力头(P_m × V_m) × 输出投影矩阵 W_O + 偏置 b_O
+```
+
+这里 `L=320`，分母对该 query 对应的全部 key 位置求和；使用 `k` 作为求和下标，避免和分子的位置 `j` 混淆。
 
 ```python
 attn = attn.softmax(dim=-1)
@@ -421,16 +450,27 @@ x = self.linear1(self.norm(x)).reshape(
 按代码完整写为：
 
 $$
-U=\operatorname{LoRP}_1(\operatorname{LN}(X_{in})),\qquad
-X_{split}=\operatorname{reshape}(U,B,Nh,D/h).
+U = \mathrm{LoRP}_1\left(\mathrm{LN}(X_{\mathrm{in}})\right)
 $$
+
+$$
+X_{\mathrm{split}} = \mathrm{reshape}\left(U, B, N h, D/h\right)
+$$
+
+纯文本对照：
+
+```text
+U = linear1(LayerNorm(X_in))          # [B, N, D]
+X_split = U.reshape(B, N*h, D//h)    # [B, N*h, D/h]
+搜索例子：[1,512,768] → [1,1024,384]
+```
 
 形状从 `[1,512,768]` 变成 `[1,1024,384]`。**这里拆的是通道，不是把图像在空间上再切成更小的 patch。** 每个原 token 的前后 384 个通道成为两个子 token。
 
 `LoRP` 在 [attn.py 第 15 行](./SEATrack-main/lib/models/layers/attn.py#L15)，推理时可写为：
 
 $$
-\operatorname{LoRP}(u)=(uA+b_a)B+b_b,\quad 768\to4\to768.
+\mathrm{LoRP}(u)=(uA+b_a)B+b_b,\quad 768\to4\to768.
 $$
 
 默认 `if_act=False`，没有中间 GELU；训练时两次 dropout 仍会启用。它是 HMoE 内部的低秩投影，与前面的“冻结大矩阵旁边加 LoRA 增量”不是同一种连接方式。
@@ -611,12 +651,31 @@ $$
 对应 [head.py:146](./SEATrack-main/lib/models/layers/head.py#L146)：
 
 $$
-(u^*,v^*)=\arg\max_{u,v}p_{v,u},
+(u_{\max}, v_{\max}) = \mathrm{argmax}_{u,v}\; p_{v,u}
 $$
 
 $$
-\hat b=\left(\frac{u^*+\delta_x}{16},\ \frac{v^*+\delta_y}{16},\ \hat w,\ \hat h\right).
+\hat{c}_x = \frac{u_{\max} + \delta_x}{16}
 $$
+
+$$
+\hat{c}_y = \frac{v_{\max} + \delta_y}{16}
+$$
+
+$$
+\hat{b} = (\hat{c}_x, \hat{c}_y, \hat{w}, \hat{h})
+$$
+
+纯文本对照：
+
+```text
+(u_max, v_max) = 分数图最大值所在的列、行
+cx = (u_max + 该位置的横向偏移 dx) / 16
+cy = (v_max + 该位置的纵向偏移 dy) / 16
+预测框 = (cx, cy, 该位置的宽度 w, 该位置的高度 h)
+```
+
+`argmax` 表示取最大值所在的位置；宽高直接从该位置的 `size_map` 读取。
 
 代码先把分数图展平取最大值，再用 `idx // 16` 和 `idx % 16` 得到行列，最后通过 `gather` 取**同一位置**的 size 和 offset。
 
