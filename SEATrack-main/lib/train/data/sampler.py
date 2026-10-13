@@ -149,6 +149,9 @@ class TrackingSampler(torch.utils.data.Dataset):
                 template_frame_ids = [1] * self.num_template_frames
                 search_frame_ids = [1] * self.num_search_frames
             try:
+                # 【训练样本｜code.md §2/§10】从同一序列读取模板帧与搜索帧，每帧已包含两种模态。
+                # causal模式选择搜索帧晚于模板帧，不要求紧邻，也不要求模板一定是视频首帧。
+                # 下面TensorDict同时携带图片和真实框，processing必须让二者经过对应几何变换。
                 template_frames, template_anno, meta_obj_train = dataset.get_frames(seq_id, template_frame_ids, seq_info_dict)
                 search_frames, search_anno, meta_obj_test = dataset.get_frames(seq_id, search_frame_ids, seq_info_dict)
 

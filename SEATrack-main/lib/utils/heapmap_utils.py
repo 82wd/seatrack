@@ -19,6 +19,9 @@ def generate_heatmap(bboxes, patch_size=320, stride=16):
         gt_scoremap = torch.zeros(bs, heatmap_size, heatmap_size)
         classes = torch.arange(bs).to(torch.long)
         # import ipdb; ipdb.set_trace()
+        # 【真实框→高斯中心图】输入是裁剪区域归一化xywh，乘16得到输出网格坐标。
+        # 中心=左上角+宽高/2，再round到整数；宽高用于确定高斯半径。
+        # 这是训练监督图，不是模型注意力图，也不是直接标记整个框内部为1。
         bbox = single_patch_bboxes * heatmap_size # (32, 4) * 16
         wh = bbox[:, 2:]
         centers_int = (bbox[:, :2] + wh / 2).round()

@@ -12,6 +12,9 @@ class FocalLoss(nn.Module, ABC):
         self.beta = beta
 
     def forward(self, prediction, target):
+        # 【中心图监督｜论文式(11)】prediction是中心概率图，target是由真实框生成的高斯图。
+        # target=1的位置是正样本；其余位置为负样本，但越靠近中心，(1-target)^beta越小。
+        # alpha=2削弱容易样本的贡献，beta=4减轻中心周围位置被当负样本的惩罚。
         positive_index = target.eq(1).float() # =1
         negative_index = target.lt(1).float() # <1
         negative_weights = torch.pow(1 - target, self.beta) 
@@ -26,6 +29,8 @@ class FocalLoss(nn.Module, ABC):
         positive_loss = positive_loss.sum()
         negative_loss = negative_loss.sum()
 
+        # 通常每个样本有一个中心正点，按全batch正点总数归一化。
+        # 若没有正点，代码仅返回负样本项总和；不要直接套用无条件除以N_positive的公式。
         if num_positive == 0:
             loss = -negative_loss
         else:

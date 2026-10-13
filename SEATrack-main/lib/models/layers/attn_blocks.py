@@ -127,6 +127,9 @@ class CEBlock_AP(nn.Module):
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm, keep_ratio_search=1.0, layer=None, lora_layers=[], moe_layers=[], amglora_rank=None, hmoe_rank=None):
         super().__init__()
         self.norm1 = norm_layer(dim)
+        # 【配置注意】这里把 amglora_rank 固定写为 8，没有使用传入参数。
+        # 下面 HMoE 的低秩维度也固定为 4；只改 YAML 的 rank 不会改变实际矩阵。
+        # 做 rank 实验应先贯通参数，再核对参数 shape 与 checkpoint 兼容性。
         self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop, layer=layer, lora_layers=lora_layers, amglora_rank=8)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
@@ -138,28 +141,48 @@ class CEBlock_AP(nn.Module):
         self.lora_layers = lora_layers
         self.moe_layers = moe_layers
         
+        # 【图 2 AMG 系数】每个增强层、每个方向一个可训练标量，初值 1。
+        # r2dte=RGB 引导 X，对应论文 w_rgb；dte2r=X 引导 RGB，对应 w_X。
+        # 推理时标量固定，随帧变化的是特征/注意力，不是另一个网络实时预测这些标量。
+        # 它们没有 sigmoid，训练后不保证落在 [0,1]。
         if layer in lora_layers:
             self.r2dte_scaling = nn.Parameter(torch.zeros(1) + 1)
             self.dte2r_scaling = nn.Parameter(torch.zeros(1) + 1)
         if layer in moe_layers:
+            # 【图 3】参数依次是特征维度、专家数、每专家 slots 数、低秩维度。
+            # attention 后 4 专家，FFN 后 8 专家；是两个独立模块，不共享彼此参数。
+            # 各模块内部处理 template/search 时复用自身权重，见 forward 中两次调用。
             self.attn_moe = HMoE(dim, 4, 2, 4)
             self.ffn_moe = HMoE(dim, 8, 2, 4)
 
     def cal_qkv(self, x, layer=None):
         B, N, C = x.shape
+        # 【论文式(1)(2)｜code.md §6】x 已经经过 norm1，shape=[B,320,768]。
+        # 联合投影为 [B,320,2304]，再拆 Q/K/V 与 12 个 head：各 [B,12,320,64]。
+        # 增强层 qkv 是 MergedLinear，只对 K/V 添加低秩增量；普通层是 nn.Linear。
+        # 真正的这条路径直接调用 attn.qkv，不经过 Attention.forward，改代码时不要找错入口。
         qkv = self.attn.qkv(x) 
         qkv = qkv.reshape(B, N, 3, self.attn.num_heads, C // self.attn.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv.unbind(0)
+        # 每个头 QK^T 得到 [B,12,320,320]：行是 query 位置，列是 key 位置。
+        # scale=1/sqrt(64)，是每头维度，不是 1/sqrt(768)。这里仍是 softmax 前的 logits。
+        # 其中既有模板↔模板、搜索↔搜索，也有模板↔搜索关系；不是最终 16×16 定位图。
         return (q @ k.transpose(-2, -1)) * self.attn.scale, v
     
     def amglora_attn(self, attn, v, shape, guidance=None, mode=None, cls_token=None, layer=None):
         B, N, C = shape
+        # 【论文式(3)(4)】更新“本路 logits”，guidance 是另一模态原始 logits。
+        # 数学形式 S_new=S_self+w*(S_other-S_self)，先混 logits，再 softmax。
+        # w=0 保留自己，w=1 采用对方关系；本路 V 不随之替换。
         if mode == 'r2dte':
             attn = attn + self.r2dte_scaling*(guidance - attn)
 
         elif mode == 'dte2r':
             attn = attn + self.dte2r_scaling*(guidance - attn)
 
+        # 【加权取信息】沿 key 维归一化，每个 query 对所有 key 的权重和为 1（dropout 前）。
+        # [B,12,320,320] @ [B,12,320,64] → [B,12,320,64]，再合并为 [B,320,768]。
+        # 最后 proj 是输出通道投影；这不是 Q_rgb 与 K_X 直接做 cross-attention。
         attn = attn.softmax(dim=-1)
         attn = self.attn.attn_drop(attn)
         output = (attn @ v).transpose(1, 2).reshape(B, N, C)
@@ -170,6 +193,9 @@ class CEBlock_AP(nn.Module):
         lens_x = global_search_idx[0].shape[1]
 
         # AMG-LoRA for Attention maps alignment
+        # 【一个 block 的主顺序】LN→注意力→残差→HMoE残差→LN/MLP残差→HMoE残差。
+        # 这里先计算两路原始分数，再相互引导；第二路不会使用第一路更新后的分数。
+        # 普通层跳过 LoRA/AMG 与 HMoE，但仍执行共享权重的两路 self-attention 和 MLP。
         if self.layer in self.lora_layers:
             brgb_attn, rgb_v = self.cal_qkv(self.norm1(x[0]), self.layer)
             bdte_attn, dte_v = self.cal_qkv(self.norm1(x[1]), self.layer)
@@ -186,20 +212,33 @@ class CEBlock_AP(nn.Module):
 
         # HMoE for cross template and search region fusion
         if self.layer in self.moe_layers:
+            # 【图 2 Divide & Concat】前 lens_t=64 个是模板，后 lens_x=256 个是搜索。
+            # 两路模板拼成 [B,128,768]；两路搜索拼成 [B,512,768]，分别进入同一个 HMoE。
+            # 这里不是模板和搜索一起跨模态拼接；mode 目前未在 HMoE 内参与运算。
             mix_z = self.attn_moe(torch.cat([x[0][:, :lens_t], x[1][:, :lens_t]], dim=1), mode = 'template')
             mix_x = self.attn_moe(torch.cat([x[0][:, lens_t:], x[1][:, lens_t:]], dim=1), mode = 'search')
+            # HMoE 输出维度与输入相同，前半对应 RGB、后半对应 X。
+            # 取各自模板/搜索片段重新接成 [B,320,768]，作为增量加入原特征。
+            # 这是残差连接，既保留原信息，也允许融合分支学习修正；DropPath 在 eval 下关闭。
             x[0] = x[0] + self.drop_path(torch.cat([mix_z[:, :lens_t], mix_x[:, :lens_x]], dim=1))
             x[1] = x[1] + self.drop_path(torch.cat([mix_z[:, lens_t:], mix_x[:, lens_x:]], dim=1))
         
         removed_rgbsearch_idx = None
         removed_dtesearch_idx = None
 
+        # 【当前默认不进入】CE_KEEP_RATIO=1 时跳过此分支。
+        # 若开启裁剪，现有 candidate_elimination 的首参传入的是三维 token，
+        # 但函数要求四维 attention，需先修正；两模态裁剪位置还须对齐才能混合注意力。
+        # 此处只作说明，不更改现有算法行为。
         if self.keep_ratio_search < 1 and (keep_ratio_search is None or keep_ratio_search < 1):
             keep_ratio_search = self.keep_ratio_search if keep_ratio_search is None else keep_ratio_search
             x[0], global_search_idx[0], removed_rgbsearch_idx = candidate_elimination(x[0], x[0], lens_t, keep_ratio_search, global_search_idx[0], ce_template_mask)
             x[1], global_search_idx[1], removed_dtesearch_idx = candidate_elimination(x[1], x[1], lens_t, keep_ratio_search, global_search_idx[1], ce_template_mask)
             lens_x = global_search_idx[0].shape[1]
 
+        # 【图 2 MLP】对每个位置独立做 768→3072→768 的通道变换，中间 GELU。
+        # MLP 本身不直接混不同位置；跨位置关系来自 attention 与 HMoE。
+        # 下面 ffn_moe 重复相同融合流程，但使用另一套 8 专家的参数。
         x[0] = x[0] + self.drop_path(self.mlp(self.norm2(x[0]))) 
         x[1] = x[1] + self.drop_path(self.mlp(self.norm2(x[1]))) 
 

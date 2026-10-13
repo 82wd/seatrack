@@ -46,6 +46,10 @@ class SEATrackActor(BaseActor):
 
         return loss, status
 
+    # 【训练数据入口｜code.md §10】Loader输出 [帧数,B,6,H,W]，当前帧数为1。
+    # 取出后模型接收 template=[B,6,128,128]、search=[B,6,256,256]。
+    # 下方旧注释写320并非当前默认尺寸；实际尺寸以任务YAML和运行tensor为准。
+    # Actor负责组织前向和loss，不负责 optimizer.step；更新在Trainer。
     def forward_pass(self, data):
         # currently only support 1 template and 1 search region
         assert len(data['template_images']) == 1
@@ -85,6 +89,9 @@ class SEATrackActor(BaseActor):
 
     def compute_losses(self, pred_dict, gt_dict, return_status=True):
         # gt gaussian map
+        # 【监督】真实框来自裁剪后的归一化 xywh，不是原图坐标。
+        # 高斯图监督目标中心，形状[B,1,16,16]；框尺寸影响高斯半径。
+        # 不是把整个目标框内部都标成1，精确中心为1、周围逐渐衰减。
         gt_bbox = gt_dict['search_anno'][-1]  # (Ns, batch, 4) (x1,y1,w,h) -> (batch, 4)
         gt_gaussian_maps = generate_heatmap(gt_dict['search_anno'], self.cfg.DATA.SEARCH.SIZE, self.cfg.MODEL.BACKBONE.STRIDE)
         gt_gaussian_maps = gt_gaussian_maps[-1].unsqueeze(1)  # (B,1,H,W)
@@ -95,10 +102,14 @@ class SEATrackActor(BaseActor):
         if torch.isnan(pred_boxes).any():
             raise ValueError("Network outputs is NAN! Stop Training")
         num_queries = pred_boxes.size(1)
+        # 预测框是cxcywh、真实框是xywh；先统一成角点xyxy，再计算L1/GIoU。
+        # 若改坐标定义，需同时改head解码、Actor变换和Tracker逆映射。
         pred_boxes_vec = box_cxcywh_to_xyxy(pred_boxes).view(-1, 4)  # (B,N,4) --> (BN,4) (x1,y1,x2,y2)
         gt_boxes_vec = box_xywh_to_xyxy(gt_bbox)[:, None, :].repeat((1, num_queries, 1)).view(-1, 4).clamp(min=0.0,
                                                                                                            max=1.0)  # (B,4) --> (B,1,4) --> (BN,4)
         # compute giou and iou
+        # 这里现有实现会将GIoU异常静默转成0；看到总loss正常不等于该项一定计算成功。
+        # 调试新模型时应确认没有频繁触发此分支，避免丢失一部分监督。
         try:
             giou_loss, iou = self.objective['giou'](pred_boxes_vec, gt_boxes_vec)  # (BN,4) (BN,4)
         except:
@@ -111,6 +122,9 @@ class SEATrackActor(BaseActor):
         else:
             location_loss = torch.tensor(0.0, device=l1_loss.device)
         # weighted sum
+        # 【论文式(11)】默认 loss = 2*GIoU + 5*L1 + 1*focal。
+        # L1比较归一化角点，GIoU比较框重叠与包围关系，focal监督中心图。
+        # 下面跨模态KL相关语句被注释，当前没有启用额外的注意力对齐loss。
         loss = self.loss_weight['giou'] * giou_loss + self.loss_weight['l1'] * l1_loss + self.loss_weight['focal'] * location_loss
         # ce_dte2r = []
         # ce_r2dte = []

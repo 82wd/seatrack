@@ -95,6 +95,10 @@ class Corner_Predictor(nn.Module):
             return exp_x, exp_y
 
 
+# 【论文图2 Prediction Head｜code.md §8】输入融合搜索特征 [B,768,16,16]。
+# 三个独立卷积分支输出中心分数1通道、尺寸2通道、偏移2通道。
+# 每支四层 Conv-BN-ReLU，最后用1×1卷积输出；训练 PEFT 时头的参数冻结，
+# 但梯度仍须通过头传给上游特征，不能把整个头包进 no_grad。
 class CenterPredictor(nn.Module, ):
     def __init__(self, inplanes=64, channel=256, feat_sz=20, stride=16, freeze_bn=False):
         super(CenterPredictor, self).__init__()
@@ -140,6 +144,10 @@ class CenterPredictor(nn.Module, ):
         return score_map_ctr, bbox, size_map, offset_map
 
     def cal_bbox(self, score_map_ctr, size_map, offset_map, return_score=False):
+        # 【解码】在16×16网格找最大分数位置；flatten 后 idx=行*16+列。
+        # 随后在同一个 idx 取 size 和 offset，而不是三个分支各自取最大值。
+        # argmax 索引本身不可微，中心分数图主要由 focal loss 直接监督。
+        # 此函数既由模型 forward 调用，也由 Tracker 对加 Hann window 的分数图再次调用。
         max_score, idx = torch.max(score_map_ctr.flatten(1), dim=1, keepdim=True) # score_map_ctr: (1, 1, 16, 16)
         idx_y = idx // self.feat_sz # 16 
         idx_x = idx % self.feat_sz # 16
@@ -151,6 +159,9 @@ class CenterPredictor(nn.Module, ):
         # bbox = torch.cat([idx_x - size[:, 0] / 2, idx_y - size[:, 1] / 2,
         #                   idx_x + size[:, 0] / 2, idx_y + size[:, 1] / 2], dim=1) / self.feat_sz
         # cx, cy, w, h
+        # 【坐标公式】cx=(列+dx)/16，cy=(行+dy)/16；size 已是相对搜索图的宽高。
+        # 输出顺序是中心形式 cxcywh，不是左上角 xywh，更不是原图像素。
+        # 原图反缩放与平移由 Tracker.map_box_back 完成。
         bbox = torch.cat([(idx_x.to(torch.float) + offset[:, :1]) / self.feat_sz, # 
                           (idx_y.to(torch.float) + offset[:, 1:]) / self.feat_sz,
                           size.squeeze(-1)], dim=1)
@@ -198,6 +209,8 @@ class CenterPredictor(nn.Module, ):
         x_size3 = self.conv3_size(x_size2)
         x_size4 = self.conv4_size(x_size3)
         score_map_size = self.conv5_size(x_size4)
+        # 中心分数、宽高经过 sigmoid/clamp；offset 保持原始实数，不限制在0～1。
+        # 改输出激活会改变解码假设与训练目标，应同步检查 cal_bbox 和 loss。
         return _sigmoid(score_map_ctr), _sigmoid(score_map_size), score_map_offset
 
 

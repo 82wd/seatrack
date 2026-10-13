@@ -29,6 +29,9 @@ def sample_target(im, target_bb, search_area_factor, output_sz=None, mask=None):
     else:
         x, y, w, h = target_bb
     # Crop image
+    # 【裁剪公式】边长 S=ceil(f*sqrt(w*h))，不是将框的宽、高分别乘f。
+    # 以目标中心为中心裁正方形，越界补零，最后 resize 为模板128或搜索256。
+    # 同一张6通道图一起裁，保持RGB/X的几何对应；resize_factor=输出边长/S。
     crop_sz = math.ceil(math.sqrt(w * h) * search_area_factor)
 
     if crop_sz < 1:
@@ -99,6 +102,9 @@ def transform_image_to_crop(box_in: torch.Tensor, box_extract: torch.Tensor, res
 
     box_in_center = box_in[0:2] + 0.5 * box_in[2:4]
 
+    # 【训练标注同步变换】裁图后真实框也要换坐标：中心相对裁剪中心的位移乘缩放比。
+    # 宽高同样缩放；normalize=True时除输出边长，得到裁剪内归一化 xywh。
+    # 改裁剪或增强却不改标注变换，会让训练输入与监督位置不对应。
     box_out_center = (crop_sz - 1) / 2 + (box_in_center - box_extract_center) * resize_factor
     box_out_wh = box_in[2:4] * resize_factor
 

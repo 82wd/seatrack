@@ -245,7 +245,7 @@ RGB: [B,320,768]       X: [B,320,768]
 
 ### AMG-LoRA：低秩适配 + 注意力响应对齐
 
-阅读 [attn.py:230](./SEATrack-main/lib/models/layers/attn.py#L230) 和 [attn_blocks.py:148](./SEATrack-main/lib/models/layers/attn_blocks.py#L148)。
+阅读 [attn.py:276](./SEATrack-main/lib/models/layers/attn.py#L276) 和 [attn_blocks.py:158](./SEATrack-main/lib/models/layers/attn_blocks.py#L158)。
 
 - `enable_lora=[False, True, True]`：按 Q、K、V 排列，只对 K/V 添加 LoRA。
 - `cal_qkv()` 分别计算两路的 `QKᵀ / √d` 和 V。
@@ -257,7 +257,7 @@ RGB: [B,320,768]       X: [B,320,768]
 
 ### HMoE：通过专家槽位混合 token
 
-阅读 [attn.py:67](./SEATrack-main/lib/models/layers/attn.py#L67) 和 [attn_blocks.py:187](./SEATrack-main/lib/models/layers/attn_blocks.py#L187)。
+阅读 [attn.py:78](./SEATrack-main/lib/models/layers/attn.py#L78) 和 [attn_blocks.py:213](./SEATrack-main/lib/models/layers/attn_blocks.py#L213)。
 
 - 输入先归一化并低秩投影，再将每个 token 的通道分成两个 slots。
 - Dispatch 在 token/slot 维度 softmax，将输入汇聚到专家槽位。
@@ -380,7 +380,7 @@ if epoch > (max_epochs - save_last_n_epoch) or epoch % save_epoch_interval == 0:
 | `TRAIN.BATCH_SIZE` | 均为每进程 32 | [build_dataloaders()](./SEATrack-main/lib/train/base_functions.py#L99) → `LTRLoader(..., batch_size=cfg.TRAIN.BATCH_SIZE)`；两进程总 batch 为 64 |
 | `TRAIN.PEFT` | 均为 True | [get_optimizer_scheduler()](./SEATrack-main/lib/train/base_functions.py#L171) 按 `moe`、`scaling`、`lora` 名称筛选可训练参数，其余冻结 |
 | `TRAIN.AMP` | 均为 False | [train_script.py](./SEATrack-main/lib/train/train_script.py) 传入 Trainer；[ltr_trainer.py](./SEATrack-main/lib/train/trainers/ltr_trainer.py) 控制 autocast 和 GradScaler |
-| `GIOU_WEIGHT` / `L1_WEIGHT` | 均为 2 / 5 | [Actor.compute_losses()](./SEATrack-main/lib/train/actors/seatrack.py#L86) 使用权重求和；focal 权重在训练入口设为 1 |
+| `GIOU_WEIGHT` / `L1_WEIGHT` | 均为 2 / 5 | [Actor.compute_losses()](./SEATrack-main/lib/train/actors/seatrack.py#L90) 使用权重求和；focal 权重在训练入口设为 1 |
 | `DATA.TEMPLATE.SIZE` / `DATA.SEARCH.SIZE` | 均为 128 / 256 | [base_functions.py](./SEATrack-main/lib/train/base_functions.py) 将裁剪尺寸交给 [processing.py](./SEATrack-main/lib/train/data/processing.py)，并影响模型位置编码与输出特征尺寸 |
 | HMoE / AMG-LoRA rank | 4 / 8，未做取值消融 | [CEBlock_AP](./SEATrack-main/lib/models/layers/attn_blocks.py#L124) 当前直接写死这两个值；测试脚本传参修复不等于改变模型 rank |
 

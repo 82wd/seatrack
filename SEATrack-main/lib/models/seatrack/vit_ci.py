@@ -90,6 +90,9 @@ class VisionTransformerCE(VisionTransformer):
         blocks = []
         ce_index = 0
         self.ce_loc = ce_loc
+        # 【图 2｜隔层插入】索引从 0 开始，所以增强的是第 2/4/6/8/10/12 层。
+        # 不同深度的 block 各有自己的参数；同一 block 被 RGB/X 两路共享。
+        # 当前 lora_layers 同时控制 K/V LoRA 和 AMG，引导消融不能简单删掉它。
         lora_layers = [1, 3, 5, 7, 9, 11] 
         moe_layers = [1, 3, 5, 7, 9, 11] 
         for i in range(depth):
@@ -114,12 +117,18 @@ class VisionTransformerCE(VisionTransformer):
 
         B, H, W = x.shape[0], x.shape[2], x.shape[3]
         # rgb_img
+        # 【code.md §4.1】沿通道拆模态，不沿空间拆图。
+        # x 是搜索图，z 是模板；dte 只是 depth/thermal/event 的通用变量名，
+        # 一次任务只用其中一种 X 模态。默认 x_rgb=[B,3,256,256]。
         x_rgb = x[:, :3, :, :]
         z_rgb = z[:, :3, :, :]
         # depth thermal event images
         x_dte = x[:, 3:, :, :]
         z_dte = z[:, 3:, :, :]
 
+        # 【图 2 Patch Embedding】四张图调用同一个卷积投影，权重共享。
+        # 模板 128/16=8，得到 8×8=64 个 token；搜索 256/16=16，得到 256 个。
+        # 各 token 有 768 个特征通道；输出分别是 [B,64,768] 和 [B,256,768]。
         z_rgb = self.patch_embed(z_rgb)
         x_rgb = self.patch_embed(x_rgb)
         z_dte = self.patch_embed(z_dte)
@@ -137,6 +146,8 @@ class VisionTransformerCE(VisionTransformer):
             mask_x = combine_tokens(mask_z, mask_x, mode=self.cat_mode)
             mask_x = mask_x.squeeze(-1)
 
+        # 【位置编码】同一空间位置在两模态使用相同编码，模板与搜索有各自编码表。
+        # 位置编码随 token 数改变；修改图像 SIZE 后不能盲目沿用旧 checkpoint。
         z_rgb += self.pos_embed_z
         x_rgb += self.pos_embed_x
         z_dte += self.pos_embed_z
@@ -146,6 +157,9 @@ class VisionTransformerCE(VisionTransformer):
             x += self.search_segment_pos_embed
             z += self.template_segment_pos_embed
 
+        # 【拼接方向】默认 direct 模式是 [模板;搜索]，沿 dim=1 拼 token 数。
+        # 得到每路 [B,320,768]，不是 [B,256,1536]，也不是 RGB 与 X 拼成一路。
+        # 此处模板/搜索交互将在各流 self-attention 内完成，跨模态交互在 block 内完成。
         x_rgbs = combine_tokens(z_rgb, x_rgb, mode=self.cat_mode)
         x_dtes = combine_tokens(z_dte, x_dte, mode=self.cat_mode)
 
@@ -163,6 +177,9 @@ class VisionTransformerCE(VisionTransformer):
         lens_z = self.pos_embed_z.shape[1]
         lens_x = self.pos_embed_x.shape[1]
 
+        # 【索引与 CE】下面记录原始空间位置，供裁剪/恢复 token 时使用。
+        # 默认 YAML 的 CE_KEEP_RATIO=[1,1,1]，所以实际不会减少搜索 token。
+        # 不要仅因类名带 CE 就认为默认速度来自候选裁剪。
         global_index_t = torch.linspace(0, lens_z - 1, lens_z, dtype=torch.int64).to(x.device)
         global_index_t = global_index_t.repeat(B, 1)
 
@@ -174,6 +191,9 @@ class VisionTransformerCE(VisionTransformer):
         removed_indexes_s = []
         global_index_s = [global_rgbsearch_idx, global_dtesearch_idx]
         attns = []
+        # 【变量含义变化】从这里起 x 是 [RGB特征, X特征] 的列表，已不再是输入图像。
+        # 每路默认保持 [B,320,768]，依次经过 12 个 block。
+        # attns 当前为空且追加被注释；return_last_attn 不能自动提供可视化所需注意力。
         x = [x_rgbs, x_dtes]
         for i, blk in enumerate(self.blocks):
             x, global_index_t, global_index_s, removed_index_s = blk(x, global_index_t, global_index_s, mask_x, ce_template_mask, ce_keep_rate)    
@@ -183,6 +203,8 @@ class VisionTransformerCE(VisionTransformer):
         if self.add_cls_token:
             x_rgbs = x_rgbs[:, 1:, 1:]
             x_dtes = x_dtes[:, 1:, 1:]
+        # 【最后一层之后】再做 LayerNorm，然后将前 64 个模板 token 与后 256 个搜索 token 分开。
+        # 模板已通过注意力影响搜索特征；预测头只需要搜索网格，不再直接接收模板。
         x_rgbs = self.norm(x[0])
         x_dtes = self.norm(x[1])
         lens_x_new = global_index_s[0].shape[1]
@@ -211,6 +233,8 @@ class VisionTransformerCE(VisionTransformer):
         x_rgb = recover_tokens(x_rgb, lens_z_new, lens_x, mode=self.cat_mode)
         x_dte = recover_tokens(x_dte, lens_z_new, lens_x, mode=self.cat_mode)
         
+        # 【论文 §3.4】逐位置逐通道相加，输出仍为 [B,256,768]。
+        # 这里不是 cat：若改拼接会使通道变为 1536，预测头及预训练权重也要相应适配。
         x_fusion = x_rgb + x_dte
         aux_dict = {
             'attns': attns

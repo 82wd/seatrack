@@ -35,15 +35,15 @@
 
 | 图中位置 / 名称 | 在做什么 | 实际源码 |
 |---|---|---|
-| 左侧 RGB-modal / X-modal | 各有模板与搜索图；X 是热红外、深度或事件图像表示 | [vit_ci.py：拆通道](./SEATrack-main/lib/models/seatrack/vit_ci.py#L117) |
+| 左侧 RGB-modal / X-modal | 各有模板与搜索图；X 是热红外、深度或事件图像表示 | [vit_ci.py：拆通道](./SEATrack-main/lib/models/seatrack/vit_ci.py#L123) |
 | Patch Embedding | 把每个图块映射为 768 维特征 | [patch_embed.py：PatchEmbed](./SEATrack-main/lib/models/layers/patch_embed.py#L6) |
-| ViT Encoder | 共 12 个 block，不是只有图中画出来的一个 | [vit_ci.py：创建 blocks](./SEATrack-main/lib/models/seatrack/vit_ci.py#L93) |
+| ViT Encoder | 共 12 个 block，不是只有图中画出来的一个 | [vit_ci.py：创建 blocks](./SEATrack-main/lib/models/seatrack/vit_ci.py#L96) |
 | 中间 Layer Norm | 对每个 token 的通道归一化 | [attn_blocks.py：norm1 / norm2](./SEATrack-main/lib/models/layers/attn_blocks.py#L129) |
-| Attention with AMG-LoRA / 右下放大图 | 生成 Q/K/V、适配 K/V、互相引导注意力 logits | [cal_qkv / amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L148) |
-| 两处 Cross-modal Fusion / 右上放大图 | 模板与模板融合，搜索与搜索融合，然后分回两路 | [CEBlock_AP.forward](./SEATrack-main/lib/models/layers/attn_blocks.py#L187) |
-| MLP | 对每个 token 做通道变换 | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L203) |
-| SC / 绕行箭头 | 残差连接：原特征加新分支输出 | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L184) |
-| 最上方 Prediction Head | 两路搜索特征相加，预测目标中心、尺寸和偏移 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L214)、[head.py](./SEATrack-main/lib/models/layers/head.py#L98) |
+| Attention with AMG-LoRA / 右下放大图 | 生成 Q/K/V、适配 K/V、互相引导注意力 logits | [cal_qkv / amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L158) |
+| 两处 Cross-modal Fusion / 右上放大图 | 模板与模板融合，搜索与搜索融合，然后分回两路 | [CEBlock_AP.forward](./SEATrack-main/lib/models/layers/attn_blocks.py#L213) |
+| MLP | 对每个 token 做通道变换 | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L242) |
+| SC / 绕行箭头 | 残差连接：原特征加新分支输出 | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L210) |
+| 最上方 Prediction Head | 两路搜索特征相加，预测目标中心、尺寸和偏移 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L238)、[head.py](./SEATrack-main/lib/models/layers/head.py#L102) |
 | 雪花 / 火焰 | 参数冻结 / 可训练 | [get_optimizer_scheduler](./SEATrack-main/lib/train/base_functions.py#L171) |
 
 注意：图中 token 数量只是示意；图形排列也不能直接当作源码 token 顺序。默认代码的顺序是 **模板在前、搜索在后**。
@@ -105,7 +105,7 @@ x = search:   [1, 6, 256, 256]
 <a id="s3"></a>
 ## 3. 裁剪和归一化：forward 之前发生了什么
 
-**对应文件：**[tracker.initialize / track](./SEATrack-main/lib/test/tracker/seatrack.py#L46)、[sample_target](./SEATrack-main/lib/train/data/processing_utils.py#L15)、[PreprocessorMM](./SEATrack-main/lib/test/tracker/data_utils.py#L17)。
+**对应文件：**[tracker.initialize / track](./SEATrack-main/lib/test/tracker/seatrack.py#L49)、[sample_target](./SEATrack-main/lib/train/data/processing_utils.py#L15)、[PreprocessorMM](./SEATrack-main/lib/test/tracker/data_utils.py#L20)。
 
 ### 3.1 围绕目标裁正方形
 
@@ -146,7 +146,7 @@ $$
 <a id="s4"></a>
 ## 4. Patch Embedding：图片变成 token
 
-**对应图 2：**左下 Patch Embedding。**对应文件：**[vit_ci.forward_features](./SEATrack-main/lib/models/seatrack/vit_ci.py#L111)、[PatchEmbed.forward](./SEATrack-main/lib/models/layers/patch_embed.py#L23)。
+**对应图 2：**左下 Patch Embedding。**对应文件：**[vit_ci.forward_features](./SEATrack-main/lib/models/seatrack/vit_ci.py#L114)、[PatchEmbed.forward](./SEATrack-main/lib/models/layers/patch_embed.py#L26)。
 
 ### 4.1 先拆模态
 
@@ -194,7 +194,7 @@ $$
 
 $m$ 代表 RGB 或 X。位置编码让模型知道 token 的空间位置；`P_z`、`P_s` 在两模态间共享。
 
-源码：[vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L140)、[combine_tokens](./SEATrack-main/lib/models/seatrack/utils.py#L7)。
+源码：[vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L151)、[combine_tokens](./SEATrack-main/lib/models/seatrack/utils.py#L7)。
 
 ```python
 z_rgb += self.pos_embed_z
@@ -211,7 +211,7 @@ x_dtes = combine_tokens(z_dte, x_dte, mode=self.cat_mode)
 <a id="s5"></a>
 ## 5. 一个 Transformer block 的执行顺序
 
-**对应图 2：**中间从下往上的结构。**对应文件：**[CEBlock_AP.forward](./SEATrack-main/lib/models/layers/attn_blocks.py#L168)。
+**对应图 2：**中间从下往上的结构。**对应文件：**[CEBlock_AP.forward](./SEATrack-main/lib/models/layers/attn_blocks.py#L191)。
 
 12 层的参数在不同层之间不共享，但每一层的 RGB/X 两路共享该层参数。零起始索引 `[1,3,5,7,9,11]`，即第 2、4、6、8、10、12 层，包含 AMG-LoRA 与两处 HMoE。
 
@@ -280,7 +280,7 @@ $$
 
 一个投影的新增参数只有 $768\times8+8\times768=12,288$。K 和 V 各有一组；Q 不加。六个增强层的 K/V LoRA 矩阵合计 $6\times2\times12,288=147,456$ 个参数，尚未包含引导标量和 HMoE。
 
-**源码入口：**[Attention.__init__](./SEATrack-main/lib/models/layers/attn.py#L230)、[MergedLinear](./SEATrack-main/lib/models/layers/attn.py#L123)。
+**源码入口：**[Attention.__init__](./SEATrack-main/lib/models/layers/attn.py#L276)、[MergedLinear](./SEATrack-main/lib/models/layers/attn.py#L160)。
 
 ```python
 self.qkv = MergedLinear(dim, dim * 3, r=amglora_rank,
@@ -290,7 +290,7 @@ self.qkv = MergedLinear(dim, dim * 3, r=amglora_rank,
 
 `[False, True, True]` 对应 Q、K、V。PyTorch 的权重存储为 `[out,in]`，因此代码里合并的 `lora_A` 是 `[16,768]`，`lora_B` 是 `[1536,8]`；分组运算分别计算 K/V 的增量，Q 对应部分补零，得到 `[2304,768]`。不要把论文矩阵的转置存储误认为算法不同。
 
-[forward](./SEATrack-main/lib/models/layers/attn.py#L219) 的关键部分：
+[forward](./SEATrack-main/lib/models/layers/attn.py#L265) 的关键部分：
 
 ```python
 result = F.linear(x, T(self.weight), bias=self.bias)
@@ -311,7 +311,7 @@ q, k, v = qkv.unbind(0)
 return (q @ k.transpose(-2, -1)) * self.attn.scale, v
 ```
 
-来源：[cal_qkv](./SEATrack-main/lib/models/layers/attn_blocks.py#L148)。
+来源：[cal_qkv](./SEATrack-main/lib/models/layers/attn_blocks.py#L158)。
 
 每个 Q/K/V 为 `[1,12,320,64]`，分数矩阵为：
 
@@ -342,7 +342,7 @@ $$
 S_X=\widetilde S_X+w_{rgb}(\widetilde S_{rgb}-\widetilde S_X).
 $$
 
-对应 [amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L155)：
+对应 [amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L172)：
 
 ```python
 if mode == 'r2dte':
@@ -391,7 +391,7 @@ return self.attn.proj_drop(self.attn.proj(output)), attn
 
 ### 7.1 先看它到底收到了哪些 token
 
-对应图 2 右上 **Divide & Concat**，代码在 [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L187)：
+对应图 2 右上 **Divide & Concat**，代码在 [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L213)：
 
 ```python
 mix_z = self.attn_moe(
@@ -411,7 +411,7 @@ mix_x = self.attn_moe(
 
 ### 7.2 式 (5)：低秩变换，再拆子 token
 
-对应 [HMoE.forward 第 89 行](./SEATrack-main/lib/models/layers/attn.py#L89)：
+对应 [HMoE.forward 第 106 行](./SEATrack-main/lib/models/layers/attn.py#L106)：
 
 ```python
 x = self.linear1(self.norm(x)).reshape(
@@ -427,7 +427,7 @@ $$
 
 形状从 `[1,512,768]` 变成 `[1,1024,384]`。**这里拆的是通道，不是把图像在空间上再切成更小的 patch。** 每个原 token 的前后 384 个通道成为两个子 token。
 
-`LoRP` 在 [attn.py 第 12 行](./SEATrack-main/lib/models/layers/attn.py#L12)，推理时可写为：
+`LoRP` 在 [attn.py 第 15 行](./SEATrack-main/lib/models/layers/attn.py#L15)，推理时可写为：
 
 $$
 \operatorname{LoRP}(u)=(uA+b_a)B+b_b,\quad 768\to4\to768.
@@ -450,7 +450,7 @@ logits = torch.bmm(x, thi)
 Dispatch = F.softmax(logits / self.D_temp, dim=1)
 ```
 
-[`attn.py:87–92`](./SEATrack-main/lib/models/layers/attn.py#L87)。`bmm` 是逐个 batch 的矩阵乘法，不会把不同样本混在一起。
+[`attn.py:101`](./SEATrack-main/lib/models/layers/attn.py#L101)。`bmm` 是逐个 batch 的矩阵乘法，不会把不同样本混在一起。
 
 $$
 \mathcal D_{u,a}=\frac{\exp(G_{u,a}/\tau_D)}{\sum_{v=1}^{Nh}\exp(G_{v,a}/\tau_D)}.
@@ -472,7 +472,7 @@ experts_inputs = torch.bmm(Dispatch.transpose(1, 2), x).reshape(
     B, self.size_experts, self.size_slots, D//self.size_slots)
 ```
 
-来源：[attn.py:96](./SEATrack-main/lib/models/layers/attn.py#L96)。
+来源：[attn.py:124](./SEATrack-main/lib/models/layers/attn.py#L124)。
 
 ```text
 [1,8,1024] @ [1,1024,384]
@@ -494,7 +494,7 @@ $$
 A_i\in\mathbb R^{384\times4},\qquad B_i\in\mathbb R^{4\times384}.
 $$
 
-对应 [MultiExpertLinear.forward](./SEATrack-main/lib/models/layers/attn.py#L59) 和 `self.experts(experts_inputs)`。默认无 GELU；上述公式省略训练态 dropout。
+对应 [MultiExpertLinear.forward](./SEATrack-main/lib/models/layers/attn.py#L66) 和 `self.experts(experts_inputs)`。默认无 GELU；上述公式省略训练态 dropout。
 
 形状 `[1,4,2,384] → [1,4,2,4] → [1,4,2,384]`。不同专家有不同参数；同一个专家的两个槽位共享该专家参数。所有专家都参与计算，不是选 top-k 专家。
 
@@ -506,7 +506,7 @@ experts_outputs = self.experts(experts_inputs).reshape(
 experts_outputs = self.linear2(experts_outputs)
 ```
 
-来源：[attn.py:98](./SEATrack-main/lib/models/layers/attn.py#L98)。
+来源：[attn.py:129](./SEATrack-main/lib/models/layers/attn.py#L129)。
 
 先 `[1,4,2,384] → [1,4,768]`，再做共享的 `LoRP₂: 768→4→768`，得到 $Y_{expert}$。论文式 (8) 强调拼接 $F_m$；图 3 和正文还画出、说明了后续低秩线性层，代码中就是 `linear2`，不能漏掉。
 
@@ -521,7 +521,7 @@ T_{n,i}=\sum_{j=1}^{h}\sum_{k=1}^{h}G_{(n,j),(i,k)},\qquad
 \mathcal C_{n,i}=\frac{\exp(T_{n,i}/\tau_C)}{\sum_{a=1}^{e}\exp(T_{n,a}/\tau_C)}.
 $$
 
-对应 [attn.py:93](./SEATrack-main/lib/models/layers/attn.py#L93)：
+对应 [attn.py:118](./SEATrack-main/lib/models/layers/attn.py#L118)：
 
 ```python
 Combine = logits.reshape(B, N, self.size_slots,
@@ -548,7 +548,7 @@ $$
 moe_out = torch.bmm(Combine, experts_outputs)
 ```
 
-来源：[attn.py:100](./SEATrack-main/lib/models/layers/attn.py#L100)。
+来源：[attn.py:134](./SEATrack-main/lib/models/layers/attn.py#L134)。
 
 输入和输出都是 `[1,512,768]`，但是内容已经通过全局汇聚与专家重组改变。各 token 的 Combine 不同，所以它们的输出也可以不同。
 
@@ -572,7 +572,7 @@ x[1] = x[1] + self.drop_path(
 
 ### 8.1 12 层结束后，只取搜索特征
 
-来源：[vit_ci.py:186](./SEATrack-main/lib/models/seatrack/vit_ci.py#L186)。
+来源：[vit_ci.py:208](./SEATrack-main/lib/models/seatrack/vit_ci.py#L208)。
 
 ```python
 x_rgbs = self.norm(x[0])
@@ -591,11 +591,11 @@ $$
 
 ### 8.2 还原为二维特征图
 
-[SEATrack.forward_head](./SEATrack-main/lib/models/seatrack/seatrack.py#L54) 将 `[1,256,768]` 重排为 `[1,768,16,16]`，其中 $256=16\times16$。每个网格位置对应搜索图中的一个 patch，但它的特征已经包含其他位置的信息。
+[SEATrack.forward_head](./SEATrack-main/lib/models/seatrack/seatrack.py#L59) 将 `[1,256,768]` 重排为 `[1,768,16,16]`，其中 $256=16\times16$。每个网格位置对应搜索图中的一个 patch，但它的特征已经包含其他位置的信息。
 
 ### 8.3 三个分支预测什么
 
-对应论文 §3.4 和 [CenterPredictor](./SEATrack-main/lib/models/layers/head.py#L98)：
+对应论文 §3.4 和 [CenterPredictor](./SEATrack-main/lib/models/layers/head.py#L102)：
 
 | 输出 | 形状 | 含义 |
 |---|---|---|
@@ -608,7 +608,7 @@ $$
 
 ### 8.4 解码：一个网格位置怎么变成框
 
-对应 [head.py:142](./SEATrack-main/lib/models/layers/head.py#L142)：
+对应 [head.py:146](./SEATrack-main/lib/models/layers/head.py#L146)：
 
 $$
 (u^*,v^*)=\arg\max_{u,v}p_{v,u},
@@ -631,7 +631,7 @@ $$
 <a id="s9"></a>
 ## 9. 从网络输出回到原图目标框
 
-这一步在 **Tracker**，不在模型 backbone 中。来源：[tracker.track](./SEATrack-main/lib/test/tracker/seatrack.py#L69)。
+这一步在 **Tracker**，不在模型 backbone 中。来源：[tracker.track](./SEATrack-main/lib/test/tracker/seatrack.py#L75)。
 
 ### 9.1 推理会加 Hann window，再解码一次
 
@@ -682,7 +682,7 @@ dataset.get_frames()             读图像与真实框
   → Trainer 反向传播、优化器更新
 ```
 
-对应：[sampler.py](./SEATrack-main/lib/train/data/sampler.py#L101)、[processing.py](./SEATrack-main/lib/train/data/processing.py#L87)、[Actor](./SEATrack-main/lib/train/actors/seatrack.py#L49)、[Trainer](./SEATrack-main/lib/train/trainers/ltr_trainer.py#L61)。
+对应：[sampler.py](./SEATrack-main/lib/train/data/sampler.py#L101)、[processing.py](./SEATrack-main/lib/train/data/processing.py#L87)、[Actor](./SEATrack-main/lib/train/actors/seatrack.py#L53)、[Trainer](./SEATrack-main/lib/train/trainers/ltr_trainer.py#L61)。
 
 Loader 的图像排列是 `[模板/搜索数量,B,6,H,W]`。当前数量均为 1，Actor 取出来后成为 `[B,6,H,W]`。原代码中有注释写 search 为 320，但当前 YAML 实际是 256，应以配置和运行张量为准。
 
@@ -700,7 +700,7 @@ $$
 \mathcal L=\mathcal L_{focal}+2\mathcal L_{GIoU}+5\mathcal L_{L1}.
 $$
 
-来源：[Actor.compute_losses](./SEATrack-main/lib/train/actors/seatrack.py#L86)、[train_script.py](./SEATrack-main/lib/train/train_script.py)。
+来源：[Actor.compute_losses](./SEATrack-main/lib/train/actors/seatrack.py#L90)、[train_script.py](./SEATrack-main/lib/train/train_script.py)。
 
 ```python
 loss = (self.loss_weight['giou'] * giou_loss
@@ -760,22 +760,22 @@ for n, p in net.named_parameters():
 
 | 论文位置 | 本文解释 | 源码位置 / 关键变量 |
 |---|---|---|
-| 图 2，Patch Embedding | 图片卷积为 token，加位置，拼模板和搜索 | [patch_embed.py](./SEATrack-main/lib/models/layers/patch_embed.py#L23)、[vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L117) |
-| 式 (1)，低秩适配 | $K=HW_K+HAB$，V 同理 | [MergedLinear.forward](./SEATrack-main/lib/models/layers/attn.py#L219)、`merge_AB()` |
-| 式 (2)，注意力 logits | $QK^\top/\sqrt{64}$ | [cal_qkv](./SEATrack-main/lib/models/layers/attn_blocks.py#L148)、`brgb_attn` / `bdte_attn` |
-| 式 (3)，X 引导 RGB | 两路 logits 差值乘系数再加回 | [amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L160)、`dte2r_scaling` |
-| 式 (4)，RGB 引导 X | 同上，另一方向 | [amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L157)、`r2dte_scaling` |
-| 图 2，softmax 与乘 V | 对关系归一化，汇总本模态信息 | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L163) |
-| 式 (5)，拆分子 token | LN、linear1、reshape | [HMoE.forward](./SEATrack-main/lib/models/layers/attn.py#L89)、`x` |
-| 式 (6)，专家槽位输入 | `Dispatch` 沿输入子 token 归一化，再加权汇聚 | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L91)、`experts_inputs` |
-| 式 (7)，专家变换 | 各专家独立的低秩映射 | [MultiExpertLinear](./SEATrack-main/lib/models/layers/attn.py#L41) |
-| 式 (8)，合并专家头 | reshape 后再 linear2 | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L98)、`experts_outputs` |
-| 式 (9)，token→专家权重 | logits 分块求和，沿专家 softmax | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L93)、`Combine` |
-| 式 (10)，融合输出 | Combine × experts_outputs | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L100)、`moe_out` |
-| §3.4，最终融合 | 搜索特征逐元素相加 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L214)、`x_fusion` |
-| §3.4，预测头 | 三路卷积与框解码 | [head.py](./SEATrack-main/lib/models/layers/head.py#L98)、`CenterPredictor` |
-| 式 (11)，loss | focal + 2 GIoU + 5 L1 | [Actor](./SEATrack-main/lib/train/actors/seatrack.py#L86) |
-| 推理后处理 | Hann window、反缩放、回原图、更新 state | [Tracker](./SEATrack-main/lib/test/tracker/seatrack.py#L83) |
+| 图 2，Patch Embedding | 图片卷积为 token，加位置，拼模板和搜索 | [patch_embed.py](./SEATrack-main/lib/models/layers/patch_embed.py#L26)、[vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L123) |
+| 式 (1)，低秩适配 | $K=HW_K+HAB$，V 同理 | [MergedLinear.forward](./SEATrack-main/lib/models/layers/attn.py#L265)、`merge_AB()` |
+| 式 (2)，注意力 logits | $QK^\top/\sqrt{64}$ | [cal_qkv](./SEATrack-main/lib/models/layers/attn_blocks.py#L158)、`brgb_attn` / `bdte_attn` |
+| 式 (3)，X 引导 RGB | 两路 logits 差值乘系数再加回 | [amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L180)、`dte2r_scaling` |
+| 式 (4)，RGB 引导 X | 同上，另一方向 | [amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L177)、`r2dte_scaling` |
+| 图 2，softmax 与乘 V | 对关系归一化，汇总本模态信息 | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L186) |
+| 式 (5)，拆分子 token | LN、linear1、reshape | [HMoE.forward](./SEATrack-main/lib/models/layers/attn.py#L106)、`x` |
+| 式 (6)，专家槽位输入 | `Dispatch` 沿输入子 token 归一化，再加权汇聚 | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L112)、`experts_inputs` |
+| 式 (7)，专家变换 | 各专家独立的低秩映射 | [MultiExpertLinear](./SEATrack-main/lib/models/layers/attn.py#L48) |
+| 式 (8)，合并专家头 | reshape 后再 linear2 | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L129)、`experts_outputs` |
+| 式 (9)，token→专家权重 | logits 分块求和，沿专家 softmax | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L118)、`Combine` |
+| 式 (10)，融合输出 | Combine × experts_outputs | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L134)、`moe_out` |
+| §3.4，最终融合 | 搜索特征逐元素相加 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L238)、`x_fusion` |
+| §3.4，预测头 | 三路卷积与框解码 | [head.py](./SEATrack-main/lib/models/layers/head.py#L102)、`CenterPredictor` |
+| 式 (11)，loss | focal + 2 GIoU + 5 L1 | [Actor](./SEATrack-main/lib/train/actors/seatrack.py#L90) |
+| 推理后处理 | Hann window、反缩放、回原图、更新 state | [Tracker](./SEATrack-main/lib/test/tracker/seatrack.py#L94) |
 
 ### 全流程形状检查表（单样本、默认无 token 裁剪）
 
@@ -810,16 +810,16 @@ Tracker 最终 target_bbox                     [x,y,w,h]，原图像素
 
 | 想研究的问题 | 修改入口 | 必须一起检查什么 |
 |---|---|---|
-| AMG 是否有帮助 | [CEBlock_AP.forward / amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L155) | 对照组保留相同 LoRA，只关闭 logits 互引导；仅删除 `lora_layers` 会同时去掉 LoRA，不能隔离 AMG 贡献 |
+| AMG 是否有帮助 | [CEBlock_AP.forward / amglora_attn](./SEATrack-main/lib/models/layers/attn_blocks.py#L172) | 对照组保留相同 LoRA，只关闭 logits 互引导；仅删除 `lora_layers` 会同时去掉 LoRA，不能隔离 AMG 贡献 |
 | 引导系数是否应随帧变化 | 同上，以及 [optimizer 参数筛选](./SEATrack-main/lib/train/base_functions.py#L171) | 新门控输出 `[B,1,1,1]` 等可广播形状；初始化、参数数、额外开销；新模块必须进入优化器，否则名字不匹配可能被冻住 |
-| HMoE 是否有效 | [两处 HMoE 残差](./SEATrack-main/lib/models/layers/attn_blocks.py#L187) | 分开研究 attention 后 / FFN 后，输出尺寸必须保持原值 |
-| rank 大小的作用 | [block 构造](./SEATrack-main/lib/models/layers/attn_blocks.py#L130) | 当前 AMG rank 写死 8、HMoE 写死 4；先接通传入参数，打印实际矩阵形状，不能只改 YAML |
-| 专家数或 slots 的作用 | [HMoE 构造](./SEATrack-main/lib/models/layers/attn.py#L67) 与 block 构造 | `D % slots == 0`，gate/expert/reshape 一起匹配；旧权重尺寸不兼容 |
-| 模块插入哪些层 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L93) | 零起始索引；LoRA/AMG 当前耦合，新增参数是否加载和训练 |
+| HMoE 是否有效 | [两处 HMoE 残差](./SEATrack-main/lib/models/layers/attn_blocks.py#L213) | 分开研究 attention 后 / FFN 后，输出尺寸必须保持原值 |
+| rank 大小的作用 | [block 构造](./SEATrack-main/lib/models/layers/attn_blocks.py#L133) | 当前 AMG rank 写死 8、HMoE 写死 4；先接通传入参数，打印实际矩阵形状，不能只改 YAML |
+| 专家数或 slots 的作用 | [HMoE 构造](./SEATrack-main/lib/models/layers/attn.py#L78) 与 block 构造 | `D % slots == 0`，gate/expert/reshape 一起匹配；旧权重尺寸不兼容 |
+| 模块插入哪些层 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L96) | 零起始索引；LoRA/AMG 当前耦合，新增参数是否加载和训练 |
 | 搜索大小、搜索范围 | [任务 YAML](./SEATrack-main/experiments/seatrack/)、[sample_target](./SEATrack-main/lib/train/data/processing_utils.py#L15) | FACTOR 改裁剪范围，SIZE 改分辨率，二者不同；SIZE 改变 token 数、位置编码、head 网格和 Hann window，旧权重不能想当然直接加载 |
-| 从 768 维换更大骨干 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py)、[HMoE](./SEATrack-main/lib/models/layers/attn.py#L67) | HMoE 的 linear1/linear2 调用 LoRP 时默认维度写死 768，需显式接通 in_dim/out_dim，并核验预训练兼容 |
+| 从 768 维换更大骨干 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py)、[HMoE](./SEATrack-main/lib/models/layers/attn.py#L78) | HMoE 的 linear1/linear2 调用 LoRP 时默认维度写死 768，需显式接通 in_dim/out_dim，并核验预训练兼容 |
 | 对模态退化的鲁棒性 | 数据处理与测试读图入口 | 只改变指定模态，记录退化强度、序列和随机种子；区分训练增强与测试干预 |
-| 增加对齐损失 | [Actor](./SEATrack-main/lib/train/actors/seatrack.py#L86) + backbone/block 返回值 | 先返回真正的 attention，明确 softmax 前后和归一化维度；当前 `attns=[]` 没有填入，不能直接拿来算 |
+| 增加对齐损失 | [Actor](./SEATrack-main/lib/train/actors/seatrack.py#L90) + backbone/block 返回值 | 先返回真正的 attention，明确 softmax 前后和归一化维度；当前 `attns=[]` 没有填入，不能直接拿来算 |
 
 ### 两个可以先做的受控实验
 
@@ -831,11 +831,11 @@ Tracker 最终 target_bbox                     [x,y,w,h]，原图像素
 
 1. **形状与数值**：一个 batch 能完整 forward，形状符合第 11 节，所有输出和 loss 有限。
 2. **参数与梯度**：打印可训练参数名称、数量；新模块确实有梯度，优化器 step 后确实改变。对冻结参数，不应产生优化器更新。
-3. **保存与加载**：相同模型在 eval 下，保存再加载后的输出应一致；特别记录 LoRA 是否合并。`MergedLinear.train(False)` 会修改基础 weight，而 `merged` 不是 state_dict 参数，见 [attn.py](./SEATrack-main/lib/models/layers/attn.py#L202)。加载器对 RGB-T/D 有特定保存流程假设，不能随便复用。
+3. **保存与加载**：相同模型在 eval 下，保存再加载后的输出应一致；特别记录 LoRA 是否合并。`MergedLinear.train(False)` 会修改基础 weight，而 `merged` 不是 state_dict 参数，见 [attn.py](./SEATrack-main/lib/models/layers/attn.py#L248)。加载器对 RGB-T/D 有特定保存流程假设，不能随便复用。
 4. **实验条件**：初始化、数据划分、随机种子、训练轮数、有效 batch、预处理与评测协议可比较；不要用测试集挑最好的改动。
 5. **效果证据**：既看全量指标，也看具体失败序列；速度比较使用相同硬件和测试设置，并说明波动。
 
-还有两个现有实现限制：默认 CE 关闭；若将 keep ratio 改小，[candidate_elimination 调用](./SEATrack-main/lib/models/layers/attn_blocks.py#L197) 当前把三维 token 当四维 attention 传入，需要先修正。即使修好，还要保证两模态被裁剪后的位置能一一对应，才能直接混合注意力。HMoE 温度 `D_temp/C_temp` 未设置正值约束，若研究路由稳定性，应观察实际数值，而不是假定训练中永远为正。
+还有两个现有实现限制：默认 CE 关闭；若将 keep ratio 改小，[candidate_elimination 调用](./SEATrack-main/lib/models/layers/attn_blocks.py#L233) 当前把三维 token 当四维 attention 传入，需要先修正。即使修好，还要保证两模态被裁剪后的位置能一一对应，才能直接混合注意力。HMoE 温度 `D_temp/C_temp` 未设置正值约束，若研究路由稳定性，应观察实际数值，而不是假定训练中永远为正。
 
 <a id="s13"></a>
 ## 13. 实际看代码与汇报的顺序
@@ -844,13 +844,13 @@ Tracker 最终 target_bbox                     [x,y,w,h]，原图像素
 
 | 停点 | 在哪里看 | 要回答的问题 |
 |---|---|---|
-| ① `track()` 调用网络前 | [Tracker](./SEATrack-main/lib/test/tracker/seatrack.py#L80) | 模板、搜索来自哪一帧，是什么尺寸？ |
-| ② patch_embed 后 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L123) | 为什么是 64 / 256 个 token？ |
-| ③ `cal_qkv()` | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L148) | Q/K/V 与 logits 分别多大？ |
-| ④ `amglora_attn()` | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L155) | 哪份 logits 引导哪份，V 来自哪里？ |
-| ⑤ `HMoE.forward()` | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L84) | Dispatch 与 Combine 沿哪个维度 softmax？ |
-| ⑥ `x_fusion` | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L214) | 模板去哪了，为什么只剩 256？ |
-| ⑦ `cal_bbox()` | [head.py](./SEATrack-main/lib/models/layers/head.py#L142) | 网格坐标怎么变成归一化框？ |
+| ① `track()` 调用网络前 | [Tracker](./SEATrack-main/lib/test/tracker/seatrack.py#L91) | 模板、搜索来自哪一帧，是什么尺寸？ |
+| ② patch_embed 后 | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L132) | 为什么是 64 / 256 个 token？ |
+| ③ `cal_qkv()` | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L158) | Q/K/V 与 logits 分别多大？ |
+| ④ `amglora_attn()` | [attn_blocks.py](./SEATrack-main/lib/models/layers/attn_blocks.py#L172) | 哪份 logits 引导哪份，V 来自哪里？ |
+| ⑤ `HMoE.forward()` | [attn.py](./SEATrack-main/lib/models/layers/attn.py#L98) | Dispatch 与 Combine 沿哪个维度 softmax？ |
+| ⑥ `x_fusion` | [vit_ci.py](./SEATrack-main/lib/models/seatrack/vit_ci.py#L238) | 模板去哪了，为什么只剩 256？ |
+| ⑦ `cal_bbox()` | [head.py](./SEATrack-main/lib/models/layers/head.py#L146) | 网格坐标怎么变成归一化框？ |
 | ⑧ `map_box_back()` | [Tracker](./SEATrack-main/lib/test/tracker/seatrack.py) | 如何回到原图，下一帧使用什么？ |
 
 一个容易踩到的阅读陷阱：当前 block 直接调用 `self.attn.qkv()`，主要注意力逻辑写在 `CEBlock_AP.cal_qkv()` 与 `amglora_attn()`；**只在 `Attention.forward()` 里修改或打断点，可能不会影响你正在看的 SEATrack 路径。**

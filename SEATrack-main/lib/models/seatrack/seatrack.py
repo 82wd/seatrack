@@ -41,6 +41,11 @@ class SEATrack(nn.Module):
                 ce_keep_rate=None,
                 return_last_attn=False,
                 ):
+        # 【阅读入口｜code.md §4～8】这里是模型的一次 forward，不负责视频帧循环。
+        # 默认 template=[B,6,128,128]、search=[B,6,256,256]；B 是样本组数，
+        # 6 通道是 RGB 的 3 通道加第二模态的 3 通道，不是 6 张独立图片。
+        # backbone 内部拆成两路，完成注意力与跨模态融合；默认返回 [B,256,768]。
+        # 框坐标映射、Hann window 和上一帧状态在 lib/test/tracker/seatrack.py。
         x, aux_dict = self.backbone(z=template, x=search,
                                     ce_template_mask=ce_template_mask,
                                     ce_keep_rate=ce_keep_rate,
@@ -60,6 +65,10 @@ class SEATrack(nn.Module):
         """
         cat_feature: output embeddings of the backbone, it can be (HW1+HW2, B, C) or (HW2, B, C)
         """
+        # 【预测头输入】当前骨干已经只返回搜索 token，因此这里取末 256 个相当于保留全部。
+        # 下面先构造 [B,1,768,256]，再还原为 [B,768,16,16]；Nq 默认等于 1。
+        # 不要被上面的旧 docstring 误导：当前接口是 batch 在前的 [B,N,C]。
+        # 若修改搜索分辨率，需要同步 token 数、位置编码和 box_head 的 feat_sz。
         enc_opt = cat_feature[:, -self.feat_len_s:]  # encoder output for the search region (B, HW, C)
         opt = (enc_opt.unsqueeze(-1)).permute((0, 3, 2, 1)).contiguous()
         bs, Nq, C, HW = opt.size()
@@ -77,6 +86,9 @@ class SEATrack(nn.Module):
 
         elif self.head_type == "CENTER":
             # run the center head
+            # 【论文 §3.4】CENTER 分支返回分数图 [B,1,16,16]、尺寸/偏移图 [B,2,16,16]。
+            # bbox 是搜索区域内归一化的 (cx,cy,w,h)，随后整理成 [B,1,4]。
+            # 推理 Tracker 会对分数图加 Hann window 再解码，未直接采用这里的 bbox。
             score_map_ctr, bbox, size_map, offset_map = self.box_head(opt_feat, gt_score_map)
             # outputs_coord = box_xyxy_to_cxcywh(bbox)
             outputs_coord = bbox
@@ -90,6 +102,9 @@ class SEATrack(nn.Module):
             raise NotImplementedError
 
 
+# 【模型工厂】真正使用的骨干从 vit_ci.py 导入，而不是同目录的 vit_ce.py。
+# training=True 时按 PRETRAIN_FILE 加载初始化权重；测试模型权重在 Tracker 中加载。
+# “冻结哪些参数”由训练的 get_optimizer_scheduler 决定，不是由这个参数单独决定。
 def build_seatrack(cfg, training=True):
     current_dir = os.path.dirname(os.path.abspath(__file__))  # This is your Project Root
     pretrained_path = os.path.join(current_dir, '../../../pretrained_models')  # use pretrained OSTrack as initialization

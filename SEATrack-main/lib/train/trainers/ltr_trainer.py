@@ -61,6 +61,8 @@ class LTRTrainer(BaseTrainer):
     def cycle_dataset(self, loader):
         """Do a cycle of training or validation."""
 
+        # 【训练/验证模式】训练启用dropout/DropPath，验证关闭；同时触发LoRA合并或拆分。
+        # 随后fix_bns单独将预测头的BatchNorm设为eval，使冻结头的统计量不被训练batch改变。
         self.actor.train(loader.training)
         torch.set_grad_enabled(loader.training)
 
@@ -98,6 +100,9 @@ class LTRTrainer(BaseTrainer):
                 # else:
                     # import ipdb; ipdb.set_trace()
                     # print(loss)
+                # 【一次更新】loss反向传播到可训练模块；AMP=False时GradScaler为disabled模式，
+                # 仍会正常backward和step，并非只做前向。unscale后裁剪梯度，再执行优化器更新。
+                # 这是仓库标准Trainer；若服务器使用梯度累积副本，更新频率以该副本为准。
                 self.scaler.scale(loss).backward()
                 if self.settings.grad_clip_norm > 0:
                     self.scaler.unscale_(self.optimizer)

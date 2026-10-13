@@ -108,6 +108,9 @@ class seatrackProcessing(BaseProcessing):
 
 
             # Add a uniform noise to the center pos. RGB and X modalities are aligned.
+            # 【训练裁剪扰动】对真实框附近的裁剪中心/尺度加扰动，模拟目标不总在搜索正中心。
+            # 扰动框决定“在哪裁”，原始真实框仍决定监督位置，不能拿扰动框替代真实目标。
+            # 当前6通道图片整体裁剪，RGB与X使用同一几何操作，保持跨模态位置对应。
             jittered_anno = [self._get_jittered_box(a, s) for a in data[s + '_anno']]
 
             # 2021.1.9 Check whether data is valid. Avoid too small bounding boxes stack (Ns, 4)
@@ -121,6 +124,9 @@ class seatrackProcessing(BaseProcessing):
 
             # Crop image region centered at jittered_anno box
             # Here, we normalize anno to 0-1
+            # 【输出坐标】返回裁剪后图片与归一化xywh标注，默认模板128、搜索256。
+            # 随后transform负责张量化、颜色增强和归一化；最终Loader增加batch维。
+            # 新增随机增强时需确认图像/框同步，以及两模态是否应该共享同一个随机几何参数。
             crops, boxes, _, _ = prutils.jittered_center_crop(data[s + '_images'], jittered_anno,
                                                             data[s + '_anno'], self.search_area_factor[s],
                                                             self.output_sz[s])

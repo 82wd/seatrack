@@ -9,6 +9,9 @@ import math
 from typing import Optional, List
 
 # Low-Rank Projection
+# 【HMoE 的低秩投影｜code.md §7】这不是“冻结矩阵+旁路增量”的 LoRA，
+# 而是独立的两层窄瓶颈映射，默认 768→4→768，带 bias 和训练态 dropout。
+# 默认 if_act=False，所以中间 act 为 Identity，不要误读为必有 GELU。
 class LoRP(nn.Module):
     def __init__(self, in_dim=768, hid_dim=4, out_dim=768, drp1=0.1, drp2=0.1, use_bias=True, if_act=False):
         super().__init__()
@@ -38,6 +41,10 @@ class LoRP(nn.Module):
         else:
             return self.drop2(self.drop1(self.act(x @ self.lora_a)) @ self.lora_b)
 
+# 【论文式(7)】专家并行计算，输入 [B,e,h,D/h]。
+# 每个专家有独立 A_i、B_i，但该专家的 h 个槽位共享其 A_i、B_i。
+# 默认 h=2、D/h=384、r=4：384→4→384，保持输入/输出形状。
+# 不是 top-k 路由，所有专家均参与运算。
 class MultiExpertLinear(nn.Module):
     def __init__(self, num_experts, in_dim, hid_dim, drp1, drp2, use_bias=True, if_act=False):
         super(MultiExpertLinear, self).__init__()
@@ -64,6 +71,10 @@ class MultiExpertLinear(nn.Module):
         else:
             return self.drop2(self.drop1(self.act((x @ self.lora_a))) @ self.lora_b)
 
+# 【图 3｜论文式(5)～(10)】先由所有子 token 汇聚到专家，再将专家结果分配回 token。
+# 搜索调用 N=512（RGB256+X256），模板调用 N=128（RGB64+X64）。
+# 本模块输入和输出均为 [B,N,D]；B=1 仅指一个样本，不代表只有一个 token。
+# size_slots 对应论文 h，不是 Transformer 的 12 个注意力 head。
 class HMoE(nn.Module):
     def __init__(self, dim, experts, slots, hid_dim, if_norm=True):
         super().__init__()
@@ -74,6 +85,9 @@ class HMoE(nn.Module):
         thi = nn.init.normal_(thi, mean=0, std=std)
         self.norm = nn.LayerNorm(dim) if if_norm else nn.Identity()
         self.gate_thi = nn.Parameter(thi)
+        # 【改骨干维度时注意】此调用未传 in_dim/out_dim，沿用 LoRP 的 768 默认值。
+        # linear2 同样如此；将 backbone dim 改成其他值时不能只改 HMoE 的 dim。
+        # D_temp/C_temp 是可学习温度，初始 1，当前没有正值约束；研究稳定性时应检查其值。
         self.linear1 = LoRP(hid_dim=hid_dim)
         # self.experts = nn.ModuleList([CAdapter(in_dim= dim // slots, out_dim=dim // slots, hid_dim=hid_dim) for _ in range(experts)])
         self.experts = MultiExpertLinear(experts, dim // slots, hid_dim, 0.1, 0.1, use_bias=True)
@@ -86,17 +100,37 @@ class HMoE(nn.Module):
         
         thi = self.gate_thi.unsqueeze(0).expand(B, -1, -1)
         
+        # 【式(5)】LN+低秩映射不改变 [B,N,768]，reshape 将每个 token 的通道分成 h 份。
+        # 搜索示例：[B,512,768]→[B,1024,384]，拆的是特征通道，不是再次裁图。
+        # reshape 的连续顺序为 token0的两份、token1的两份……，后面 Combine 依赖这个顺序。
         x = self.linear1(self.norm(x)).reshape(B, N*self.size_slots, D//self.size_slots)
 
+        # 【式(6)前半】gate_thi=Phi，shape=[D/h,e*h]，每列对应一个专家槽位。
+        # 搜索、4专家示例：[B,1024,384] @ [B,384,8] → logits=[B,1024,8]。
+        # Dispatch 沿输入子token维 softmax：每个槽位从全部位置收集的信息权重和为1。
+        # 论文省略 batch 写 dim=0，代码带 batch 写 dim=1，含义一致。
         logits = torch.bmm(x, thi) # (B, N*slots, D//slots) x (B, D//slots, E*S) -> (B, N*slots, E*S)
         Dispatch = F.softmax(logits/self.D_temp, dim=1) # (B, N*slots, E*S)列向量是一个sequence的所有token关于一个slot的得分，所有token根据列向量的值做加权和，作为该slot的输入
+        # 【式(9)】同一 logits 的另一条分支，不是对 Dispatch 再做 softmax。
+        # 将 logits 看成 [B,N,h,e,h]，对两个 h 维求和，得到 token→expert 分数 [B,N,e]。
+        # 这就是论文 F_p 的 h×h 非重叠块聚合；这里用 sum 而不是 mean。
+        # 沿专家维 softmax 后，每个输出 token 读取各专家的权重和为1。
         Combine = logits.reshape(B, N, self.size_slots, self.size_slots*self.size_experts).sum(dim=2).reshape(B, N, self.size_experts, self.size_slots).sum(dim=-1) # (B, N, E)
         Combine = F.softmax(Combine/self.C_temp, dim=-1) # (B, N, E)行向量是一个token对一个expert的贡献度，所有expert的输出根据贡献度加权和得到该token的最终输出
 
+        # 【式(6)后半】Dispatch^T @ x 汇聚全局信息：
+        # [B,8,1024] @ [B,1024,384] → [B,8,384] → [B,4,2,384]。
+        # 每个槽位拿到所有输入子 token 的加权和，已经包含两种模态、各空间位置的信息。
         experts_inputs = torch.bmm(Dispatch.transpose(1, 2), x).reshape(B, self.size_experts, self.size_slots, D//self.size_slots) # (B, E*S, D) -> (B, E, S, D)
         # experts_outputs = torch.stack([self.experts[i](experts_inputs[:, i]) for i in range(self.size_experts)], dim=1).reshape(B, self.size_experts, -1) # (B, E, D)
+        # 【式(7)(8)】先独立专家变换，再把每专家的两个384维槽位拼回768维。
+        # [B,4,2,384]→[B,4,768]；linear2 再做共享低秩映射，图3中的上方 Low-Rank Layer。
+        # 论文式(8)简写为拼接，实际此处还有 linear2，读代码不能漏掉。
         experts_outputs = self.experts(experts_inputs).reshape(B,self.size_experts, -1)
         experts_outputs = self.linear2(experts_outputs)
+        # 【式(10)】[B,N,e] @ [B,e,D] → [B,N,D]，回到每个原始 token 的位置。
+        # 各 token 的 Combine 不同，输出也不同；调用方再拆回 RGB/X 并加残差。
+        # 与 attention 的 N×N 不同，这里的路由围绕固定数量的专家槽位进行。
         moe_out = torch.bmm(Combine, experts_outputs) # (B, N, D)
         return moe_out
 
@@ -120,6 +154,9 @@ class LoRALayer():
         self.merged = False
         self.merge_weights = merge_weights
 
+# 【论文式(1)｜K/V LoRA】PyTorch weight 存成 [out,in]，与论文 HW 写法转置。
+# 当前 Q/K/V 联合投影 out=2304，仅 K/V 启用；r=8 时 A=[16,768]、B=[1536,8]。
+# 两组低秩矩阵分别服务 K 与 V，最后为 Q 补零形成完整投影增量。
 class MergedLinear(nn.Linear, LoRALayer):
     # LoRA implemented in a dense layer
     def __init__(
@@ -163,6 +200,8 @@ class MergedLinear(nn.Linear, LoRALayer):
 
     def reset_parameters(self):
         nn.Linear.reset_parameters(self)
+        # 初始化 A 为 Xavier、B 为零，因此初始增量 BA=0，保留预训练投影输出。
+        # 不能仅因论文笼统写 Xavier 就认为这里 A/B 初始均为随机非零。
         if hasattr(self, 'lora_A'):
             # initialize A the same way as the default for nn.Linear and B to zero
             # nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
@@ -174,6 +213,9 @@ class MergedLinear(nn.Linear, LoRALayer):
         result[self.lora_ind] = x
         return result
 
+    # 【实现技巧】conv1d 的 groups 对应启用的 K/V 两组；此处不是图像空间卷积。
+    # 计算各组 B_i A_i 得到 [1536,768]，zero_pad 插入 Q 的全零增量，成为 [2304,768]。
+    # 这里 self.scaling=alpha/r 的乘法在 forward/train 中被注释，实际没有应用该缩放。
     def merge_AB(self, mode=None):
         def T(w):
             return w.transpose(0, 1) if self.fan_in_fan_out else w
@@ -199,6 +241,10 @@ class MergedLinear(nn.Linear, LoRALayer):
                                 ).squeeze(0)
         return T(self.zero_pad(delta_w))
 
+    # 【保存/加载注意】eval() 最终会调用 train(False)，将 LoRA 增量加到基础 weight；
+    # 再 train(True) 时减掉，以恢复训练态的“基础权重+单独增量”计算。
+    # merged 是普通 Python 标记，不会自动写入 state_dict；checkpoint 必须明确合并状态。
+    # 冻结 qkv.weight 在保存时发生数值变化，可能源于合并，不等于优化器更新了它。
     def train(self, mode: bool = True):
         def T(w):
             return w.transpose(0, 1) if self.fan_in_fan_out else w
@@ -234,6 +280,9 @@ class Attention(nn.Module):
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = head_dim ** -0.5
+        # 【Q/K/V 的开关顺序】False/True/True = Q 不加 LoRA，K 和 V 加。
+        # scale 使用每头 head_dim=768/12=64 的平方根倒数；它是注意力缩放，
+        # 不是 LoRA alpha/r，也不是 AMG 的方向引导系数，这三类 scaling 不要混淆。
         if layer in lora_layers:
             self.qkv = MergedLinear(dim, dim * 3, r=amglora_rank, lora_alpha=1, lora_dropout=0.1,
                                 bias=qkv_bias, enable_lora=[False, True, True])

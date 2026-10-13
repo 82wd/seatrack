@@ -12,6 +12,9 @@ class Preprocessor(object):
         img_tensor_norm = ((img_tensor / 255.0) - self.mean) / self.std  # (1,3,H,W)
         return img_tensor_norm
 
+# 【6通道归一化】输入 numpy [H,W,6]，输出 float tensor [1,6,H,W]。
+# 先除255，再减mean、除std；RGB与X各使用同一组3通道统计量。
+# 训练的 transforms.py 有独立对应实现，改归一化时应检查训练/测试一致性。
 class PreprocessorMM(object):
     def __init__(self):
         self.mean = torch.tensor([0.485, 0.456, 0.406, 0.485, 0.456, 0.406]).view((1, 6, 1, 1)).cuda()

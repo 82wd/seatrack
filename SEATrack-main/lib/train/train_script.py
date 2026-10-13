@@ -46,6 +46,8 @@ def run(settings):
     settings.log_file = os.path.join(log_dir, "%s-%s.log" % (settings.script_name, settings.config_name))
 
     # Build dataloaders
+    # 【工程组装入口】cfg已用任务YAML覆盖默认配置；依次创建数据、模型、Actor、优化器、Trainer。
+    # 模型负责预测，Actor负责计算loss，Trainer负责迭代和更新，不要把三个职责混在一起。
     loader_train, loader_val = build_dataloaders(cfg, settings)
 
     # Create network
@@ -76,6 +78,8 @@ def run(settings):
         raise ValueError("illegal script name")
 
     # Optimizer, parameters, and learning rates
+    # 此函数还执行PEFT参数冻结。模型创建成功不代表新加模块已进入优化器。
+    # 做结构实验时检查打印的可训练参数数量，并确认新增参数真的需要梯度。
     optimizer, lr_scheduler = get_optimizer_scheduler(net, cfg)
     use_amp = getattr(cfg.TRAIN, "AMP", False)
     settings.save_epoch_interval = getattr(cfg.TRAIN, "SAVE_EPOCH_INTERVAL", 1)
