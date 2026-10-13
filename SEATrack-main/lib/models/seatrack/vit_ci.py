@@ -120,22 +120,21 @@ class VisionTransformerCE(VisionTransformer):
         # 【code.md §4.1】沿通道拆模态，不沿空间拆图。
         # x 是搜索图，z 是模板；dte 只是 depth/thermal/event 的通用变量名，
         # 一次任务只用其中一种 X 模态。默认 x_rgb=[B,3,256,256]。
-        x_rgb = x[:, :3, :, :]
+
+        # 拆通道，选取图片数据
+        # 拆成RGB和DTE两部分
+        x_rgb = x[:, :3, :, :] # 
         z_rgb = z[:, :3, :, :]
-        # depth thermal event images
         x_dte = x[:, 3:, :, :]
         z_dte = z[:, 3:, :, :]
 
-        # 【图 2 Patch Embedding】四张图调用同一个卷积投影，权重共享。
-        # 模板 128/16=8，得到 8×8=64 个 token；搜索 256/16=16，得到 256 个。
-        # 各 token 有 768 个特征通道；输出分别是 [B,64,768] 和 [B,256,768]。
+        # 按patch划分，转换为token
         z_rgb = self.patch_embed(z_rgb)
         x_rgb = self.patch_embed(x_rgb)
         z_dte = self.patch_embed(z_dte)
         x_dte = self.patch_embed(x_dte)
 
-        # attention mask handling
-        # B, H, W
+        # 处理模板图像 z 和搜索图像 x 的注意力掩码。只有当两者的掩码都不为空
         if mask_z is not None and mask_x is not None:
             mask_z = F.interpolate(mask_z[None].float(), scale_factor=1. / self.patch_size).to(torch.bool)[0]
             mask_z = mask_z.flatten(1).unsqueeze(-1)
@@ -148,6 +147,7 @@ class VisionTransformerCE(VisionTransformer):
 
         # 【位置编码】同一空间位置在两模态使用相同编码，模板与搜索有各自编码表。
         # 位置编码随 token 数改变；修改图像 SIZE 后不能盲目沿用旧 checkpoint。
+        # token上加入位置信息
         z_rgb += self.pos_embed_z
         x_rgb += self.pos_embed_x
         z_dte += self.pos_embed_z
