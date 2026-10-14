@@ -15,13 +15,13 @@ class PatchEmbed(nn.Module):
         self.patch_size = patch_size
         self.grid_size = (img_size[0] // patch_size[0], img_size[1] // patch_size[1])
         self.num_patches = self.grid_size[0] * self.grid_size[1]
-        self.flatten = flatten
+        
 
         # 【图 2｜图片→token】kernel=stride=16，用一个卷积同时映射所有不重叠图块。
         # 每块 3×16×16 像素相当于先展平，再乘投影矩阵并加偏置。
         # 输出 768 维是特征维度；恰好等于该图块的像素数，并不表示保留原像素。
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
-        self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size) #创建一个卷积层
+        self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity() #是否归一化
 
     def forward(self, x):
         # allow different input size

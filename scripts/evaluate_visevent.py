@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import zipfile
+import argparse
 import numpy as np
 
 SPECIAL = "dvSave-2021_02_06_09_23_50_person1"
@@ -58,6 +59,10 @@ def main():
     base = Path("/nas/liziyan103/seatrack")
     tool = base/"tools/visevent_benchmark"
     result = base/"SEATrack/RGBE_workspace/official_rgbe_full_20261012_035143/VisEvent"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--result-dir', type=Path, default=result)
+    args = parser.parse_args()
+    result = args.result_dir.resolve()
     names = [s.strip() for s in (tool/"VisEvent_testing_subset.txt").read_text().splitlines() if s.strip()]
     assert len(names) == len(set(names)) == 320
     rows = []

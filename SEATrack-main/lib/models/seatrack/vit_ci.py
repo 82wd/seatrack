@@ -86,13 +86,11 @@ class VisionTransformerCE(VisionTransformer):
         self.pos_embed_z = nn.Parameter(torch.zeros(1, self.num_patches_template, embed_dim))
         self.pos_embed_x = nn.Parameter(torch.zeros(1, self.num_patches_search, embed_dim))
         
+        # 创建blocks    
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         blocks = []
         ce_index = 0
         self.ce_loc = ce_loc
-        # 【图 2｜隔层插入】索引从 0 开始，所以增强的是第 2/4/6/8/10/12 层。
-        # 不同深度的 block 各有自己的参数；同一 block 被 RGB/X 两路共享。
-        # 当前 lora_layers 同时控制 K/V LoRA 和 AMG，引导消融不能简单删掉它。
         lora_layers = [1, 3, 5, 7, 9, 11] 
         moe_layers = [1, 3, 5, 7, 9, 11] 
         for i in range(depth):
