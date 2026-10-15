@@ -937,3 +937,5 @@ Tracker 最终 target_bbox                     [x,y,w,h]，原图像素
     2. 图变成向量
     3. 加上位置信息（混进token的768数字里面）
     4. combine
+
+4. transformer block

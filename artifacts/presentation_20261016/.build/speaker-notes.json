@@ -1,0 +1,175 @@
+[
+  {
+    "title": "SEATrack 核心机制与复现进展",
+    "note": "本次汇报分为方法理解和复现进度两部分。以一个RGB与热红外样本说明数据在AMG-LoRA、HMoE和预测头中的流动。计算数值用于教学，实验数值来自仓库记录。进度证据最近更新为2026年10月14日，没有在制作时连接服务器查询。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/code.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md"
+    ]
+  },
+  {
+    "title": "模型结构与本次汇报范围",
+    "note": "图为仓库提供的论文框架图。默认骨干12层，零起始索引1、3、5、7、9、11使用AMG-LoRA和两处HMoE。每层两模态共享该层参数，层与层之间参数独立。Prediction Head位于Encoder之后。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/assets/Framework.png",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/vit_ci.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py"
+    ]
+  },
+  {
+    "title": "贯穿全程的单样本",
+    "note": "模板来自目标参考区域，搜索来自当前帧目标附近。输入尺寸和token数量来自默认配置。搜索网格第7行第9列按零起始编号为121，在模板搜索拼接后的序列中编号185。这个位置只是教学跟踪位置，并不预先认定其为真实目标中心。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/vit_ci.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/patch_embed.py"
+    ]
+  },
+  {
+    "title": "AMG-LoRA：Q、K、V 的生成",
+    "note": "先执行库中的LayerNorm。公式使用行向量右乘写法，实际PyTorch权重存储为out,in。省略训练dropout。r=8，K和V拥有各自的A和B。源码定义了alpha/r但注释了实际乘法。推理时可以合并LoRA增量，等价于这里的展开表达。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py"
+    ]
+  },
+  {
+    "title": "AMG：两种模态互相引导注意力分数",
+    "note": "S是softmax前的logits，P是softmax后的权重。两路都引用对方原始logits。α对应dte2r_scaling，β对应r2dte_scaling，都是每增强层一个方向一个可学习标量，初始为1，无sigmoid约束。下方仅用两个key演示，实际每行有320个key。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py"
+    ]
+  },
+  {
+    "title": "注意力输出：按新权重读取本模态 V",
+    "note": "以下两个通道仅是教学缩小例子。真实计算每个头64维，12个头合并后做输出投影，返回分支更新量。xrgb_attn变量名虽然包含attn，但这里已经是token特征。残差保留LayerNorm之前的原输入，推理DropPath关闭。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py"
+    ]
+  },
+  {
+    "title": "HMoE：模板、搜索分别跨模态融合",
+    "note": "第一处attn_moe有4个专家，每个专家2个槽位，低秩维4。模板和搜索调用同一个模块、共享参数，mode参数当前未参与内部计算。跟踪位置在搜索融合输入中的RGB编号为121，红外编号为377。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py"
+    ]
+  },
+  {
+    "title": "HMoE Dispatch：从输入汇聚到槽位",
+    "note": "LoRP的实际式为(LN(X)A+a)B+b，768到4到768，默认无GELU。输入搜索组N=512，拆分后U为1024×384。Phi为384×8。Dispatch沿输入子token维softmax，每个槽位的输入权重和为1。温度TD为可学习参数，初值1，未约束为正。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py"
+    ]
+  },
+  {
+    "title": "HMoE：专家变换与 Combine",
+    "note": "专家计算Ye,s=(Ge,s Ae+ae)Be+be，384到4到384，当前无GELU。不同专家参数独立，同一专家两个槽位共享参数。拼接两槽位为768维后经过linear2的LoRP。Combine来自同一原始logits，对每个token的2个子向量与每专家2个槽位的4项求和，再沿专家维softmax。所有专家参与，无top-k筛选。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py"
+    ]
+  },
+  {
+    "title": "HMoE 的单通道演算与拆回",
+    "note": "示例权重和值均非实测。RGB搜索token121的某通道更新为1.6，原值0.7时残差结果2.3。模板输入也独立完成相同过程，之后按各模态模板搜索顺序重组。随后MLP和第二处HMoE继续更新，第二处8专家，参数独立。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py"
+    ]
+  },
+  {
+    "title": "Prediction Head：搜索特征的三个分支",
+    "note": "CenterPredictor在本地项目中定义，内部卷积BN/ReLU来自PyTorch。最终只保留搜索，模板信息已融入搜索。每个分支四层3×3 Conv-BN-ReLU，通道768、256、128、64、32，最后1×1卷积。中心和尺寸sigmoid后clamp，偏移保持实数。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/vit_ci.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/seatrack.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/head.py"
+    ]
+  },
+  {
+    "title": "预测头解码：由同一位置取中心、尺寸和偏移",
+    "note": "教学示例：idx=121，offset=[0.25,0.50]，size=[0.25,0.50]。先从中心图找最大位置，再在同一个idx读取size和offset，不能三个分支各取最大。尺寸已相对整个搜索图归一化，不再除16。输出顺序cxcywh。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/head.py"
+    ]
+  },
+  {
+    "title": "目标框映射回原图",
+    "note": "搜索图尺寸256，原裁剪边长512，resize_factor=0.5。假设代码使用的裁剪原点为(100,200)。Tracker先用Hann窗口调整中心分数并再次解码，此例假设赢家仍为7,9。归一化框乘512得到局部中心296,240、宽高128,256。加原点得到396,440，再减半宽高得到332,312。最终clip_box需结合原图尺寸。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/test/tracker/seatrack.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/head.py"
+    ]
+  },
+  {
+    "title": "论文复现进度总览",
+    "note": "本页依据本地复现日志最新记录至2026-10-14。result/README.md对VOT22仍是旧状态，因此采用较新的详细日志。制作于2026-10-16，不宣称实时状态。三个训练任务均报告完成，但验证证据强度不同。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/result/README.md"
+    ]
+  },
+  {
+    "title": "四项官方权重评测结果",
+    "note": "所有表中数值为百分数。不同数据集指标定义不同，不做横向排名。DepthTrack使用VOT工具分析。其余三项为Python参考口径，未执行MATLAB交叉验证。VisEvent保留person1标注时间对应风险。LasHeR与RGBT234完整产物尚待本地归档。官方权重复测与独立训练复现是不同验证阶段。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/result/depthtrack/2026-10-11_official-rgbd/README.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/result/lasher/2026-10-11_official-rgbt/README.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/result/visevent/2026-10-13_official-rgbe/README.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/result/rgbt234/2026-10-13_official-rgbt/README.md"
+    ]
+  },
+  {
+    "title": "三项训练均已报告完成",
+    "note": "RGB-D第5到25轮234个张量变化，优化器步数4685到23425。RGB-E45轮，早末轮228个张量变化。RGB-T完成状态来自用户回传面板，本次没有独立读取completion.json或逐个检查checkpoint内容。RGB-T微批4累积16保持有效batch64，但不能宣称与原双卡训练数值完全等价。训练IoU和loss不能当作测试集指标。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/scripts/remaining_training/README.md"
+    ]
+  },
+  {
+    "title": "自训练评测与权重来源问题",
+    "note": "RGB-D已有PR62.9096/RE63.5460/F63.2262，与当前官方路径模型参数相同，来源疑点未解决。RGB-E自训练320条跟踪完成，PR20=77.09504076887207和SR_AUC=60.2609637859865，逐条轨迹相同、不同0、缺失0；当前官方路径和自训练末轮net参数逐张量相同，文件不是samefile。不能据此推断无训练更新，也不能据此证明独立训练精确复现。用户已要求暂缓核查并优先进行RGB-T测试。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md"
+    ]
+  },
+  {
+    "title": "VOT22：最近记录仍处于全量评测阶段",
+    "note": "数据在本地与服务器均通过127序列、80741原始帧结构验收。单序列adapter01_indoor_1成功后启动全量。最新面板23/127序列，356/1765起点，对应283047/1327004重复跟踪帧。多起点协议使跟踪帧数大于原始数据帧数。该快照不是耗时比例。需要全量退出码、轨迹完整性和官方分析指标才能确认完成。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/scripts/remaining_official/vot22_progress.py"
+    ]
+  },
+  {
+    "title": "已完成的工程工作与评测边界",
+    "note": "源码讲解与复现工作结合：加入路径隔离、参数初始化校验、独立结果目录、锁、轨迹检查和指标脚本。RGBT234修复换行兼容只处理内存文本，不修改原始标注。VisEvent特殊person1序列原始332帧与官方标注306帧，按官方参考程序取预测前缀，并保留风险。不同数据集指标口径遵循各自参考规则。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/scripts/lasher_metrics.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/result/visevent/2026-10-13_official-rgbe/README.md"
+    ]
+  },
+  {
+    "title": "下一步工作",
+    "note": "这是待执行计划，不代表已经运行。遵循用户此前暂缓RGB-E来源排查、先继续RGB-T评测的顺序。RGB-T入口已写好但尚无服务器运行完成证据。VOT22只读确认现有任务，避免重复启动。来源核查需要比对原始下载、官方目标、自训练末轮SHA，再审查初始化和恢复记录。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md"
+    ]
+  },
+  {
+    "title": "附录：源码与复现记录入口",
+    "note": "模块来自项目本地实现，不宣称所有算法皆由作者原创。cal_qkv/amglora_attn、HMoE/LoRP/MultiExpertLinear、CenterPredictor均为项目定义；nn.Conv2d、LayerNorm、softmax、矩阵运算由库提供。参考本地code.md、复现日志、各结果README及核心源码。未在线访问论文网页。",
+    "refs": [
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/head.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/vit_ci.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/seatrack.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/test/tracker/seatrack.py",
+      "/Users/lzy/Desktop/GitHub/seatrack/复现日志.md",
+      "/Users/lzy/Desktop/GitHub/seatrack/code.md"
+    ]
+  }
+]
