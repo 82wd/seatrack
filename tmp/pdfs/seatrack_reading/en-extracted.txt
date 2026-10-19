@@ -216,11 +216,11 @@ F_e = LoRP_2(ConcatChannels(Expert_e(G_e,1), Expert_e(G_e,2)))
 Different experts use different parameters, while the two slots within one expert share that
 expert's parameters. After each slot undergoes a 384→4→384 transform, the two outputs
 from the same expert are concatenated back to 768 features. The shared linear2 then
-applies another 768→4→768 LoRP. This additional linear2 operation is part of the
 
 SEATrack  /  Core Module Explanations
 AMG-LoRA  /  HMoE  /  Prediction Head
 Page 9
+applies another 768→4→768 LoRP. This additional linear2 operation is part of the
 implementation and must be included.
 3.6 Step 5: Combine and token outputs
 Combine is another computation branch based on the original routing scores L. View L as
@@ -419,10 +419,6 @@ Original-image center = [396,440]
 Original-image size   = [128,256]
 Original-image xywh   = [396-64,440-128,128,256]
                       = [332,312,128,256]
-
-SEATrack  /  Core Module Explanations
-AMG-LoRA  /  HMoE  /  Prediction Head
-Page 16
 5. How the three modules connect
 AMG-LoRA adapts the K/V projections and uses the other modality's attention relations to
 guide information retrieval. HMoE receives tokens updated by attention or the MLP,
@@ -435,7 +431,7 @@ head converts those features into the target position and size used for tracking
 
 SEATrack  /  Core Module Explanations
 AMG-LoRA  /  HMoE  /  Prediction Head
-Page 17
+Page 16
 6. Source-code references
 AMG-LoRA and block residual/fusion order:
 /Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py
@@ -462,7 +458,7 @@ CenterPredictor.cal_bbox
 
 SEATrack  /  Core Module Explanations
 AMG-LoRA  /  HMoE  /  Prediction Head
-Page 18
+Page 17
 Hann window and mapping back to the original image:
 /Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/test/tracker/seatrack.py
 SEATrack.track

@@ -13,6 +13,7 @@ ROOT=Path('/Users/lzy/Desktop/GitHub/seatrack')
 OUT=ROOT/'output/pdf'
 for name,file in [('CJK','Arial Unicode.ttf'),('Body','Arial.ttf'),('Bold','Arial Bold.ttf'),('Mono','Courier New.ttf')]:
     pdfmetrics.registerFont(TTFont(name,'/System/Library/Fonts/Supplemental/'+file))
+pdfmetrics.registerFont(TTFont('CodeFont','/System/Library/Fonts/Menlo.ttc',subfontIndex=0))
 navy=HexColor('#18344B');teal=HexColor('#007A80');ink=HexColor('#202B36');muted=HexColor('#566573')
 W,H=A4;M=48;CW=W-2*M
 
@@ -24,21 +25,21 @@ def issub(s):return bool(re.match(r'^\d\.\d\s',s))
 def code_markup(s):
     result=[];last=None;chunk=''
     for c in clean(s):
-        font='Mono' if ord(c)<128 else 'CJK'
+        font='CodeFont' if ord(c)<128 else 'CJK'
         if font!=last and chunk:
             result.append(f'<font name="{last}">{html.escape(chunk).replace(" ","&#160;")}</font>');chunk=''
         last=font;chunk+=c
     if chunk:result.append(f'<font name="{last}">{html.escape(chunk).replace(" ","&#160;")}</font>')
     return ''.join(result)
 
-def line_width(s,size):return sum(pdfmetrics.stringWidth(c,'Mono' if ord(c)<128 else 'CJK',size) for c in clean(s))
+def line_width(s,size):return sum(pdfmetrics.stringWidth(c,'CodeFont' if ord(c)<128 else 'CJK',size) for c in clean(s))
 
 def formula(lines):
     lines=[x[4:] if x.startswith('    ') else x for x in lines]
     maxw=max(line_width(x,11) for x in lines)
     size=min(11,11*(CW-28)/max(maxw,1))
     size=max(size,9)
-    st=ParagraphStyle('formula',fontName='Mono',fontSize=size,leading=size*1.65,textColor=ink,spaceAfter=0,splitLongWords=True)
+    st=ParagraphStyle('formula',fontName='CodeFont',fontSize=size,leading=size*1.65,textColor=ink,spaceAfter=0,splitLongWords=True)
     ps=[Paragraph(code_markup(x),st) for x in lines]
     t=Table([[ps]],colWidths=[CW],hAlign='LEFT')
     t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),HexColor('#F1F5F8')),('BOX',(0,0),(-1,-1),.5,HexColor('#D8E3EB')),('LEFTPADDING',(0,0),(-1,-1),12),('RIGHTPADDING',(0,0),(-1,-1),12),('TOPPADDING',(0,0),(-1,-1),10),('BOTTOMPADDING',(0,0),(-1,-1),10)]))
@@ -54,7 +55,7 @@ def build(lang,name,outname):
     cn=lang=='cn'; font='CJK' if cn else 'Body'; bold='CJK' if cn else 'Bold'
     txt=Path('/Users/lzy/Desktop',name).read_text()
     lines=txt.splitlines(); mainheads=[x for x in lines if ismain(x)]
-    style=ParagraphStyle('body',fontName=font,fontSize=12.5 if cn else 12,leading=21 if cn else 19,spaceAfter=11,textColor=ink,wordWrap='CJK' if cn else None,splitLongWords=True)
+    style=ParagraphStyle('body',fontName=font,fontSize=12.5 if cn else 12,leading=21 if cn else 19,spaceAfter=11,textColor=ink,wordWrap='CJK' if cn else None,splitLongWords=True,allowWidows=0,allowOrphans=0)
     h1=ParagraphStyle('h1',fontName=bold,fontSize=21,leading=30,textColor=navy,spaceAfter=19,keepWithNext=True)
     h2=ParagraphStyle('h2',fontName=bold,fontSize=15,leading=23,textColor=teal,spaceBefore=14,spaceAfter=10,keepWithNext=True)
     small=ParagraphStyle('small',parent=style,fontSize=10.5,leading=17,textColor=muted)
@@ -70,7 +71,8 @@ def build(lang,name,outname):
         line=lines[i];s=line.strip()
         if not s:i+=1;continue
         if ismain(line):
-            count+=1;story.append(PageBreak())
+            count+=1
+            story.append(Spacer(1,25) if count==5 else PageBreak())
             p=Paragraph(esc(line),h1);p.bookmark=f'sec{count}';p.heading=clean(line);p.level=0
             story.append(p);i+=1;continue
         if issub(line):

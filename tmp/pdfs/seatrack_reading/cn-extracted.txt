@@ -375,10 +375,6 @@ map_box_back 中，裁剪原点由上一帧目标中心减去裁剪边长的一�
 原图中的宽高   = [128,256]
 原图中的 xywh   = [396-64,440-128,128,256]
                       = [332,312,128,256]
-
-SEATrack  /  核心模块解释
-AMG-LoRA  /  HMoE  /  预测头
-第 16 页
 五、三个模块如何衔接
 AMG-LoRA 在注意力计算中调整 K/V 投影，并利用另一模态的注意力关系修正本模态的
 取信息方式。HMoE 接收注意力或 MLP 更新后的 token，将两种模态的信息汇聚到专家
@@ -390,7 +386,7 @@ AMG-LoRA 和 HMoE 位于 Transformer blocks 的特征处理过程中；预测头
 
 SEATrack  /  核心模块解释
 AMG-LoRA  /  HMoE  /  预测头
-第 17 页
+第 16 页
 六、源码对应位置
 AMG-LoRA 与 block 中的残差、融合顺序：
 /Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py
@@ -417,7 +413,7 @@ CenterPredictor.cal_bbox
 
 SEATrack  /  核心模块解释
 AMG-LoRA  /  HMoE  /  预测头
-第 18 页
+第 17 页
 Hann 窗与原图坐标还原：
 /Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/test/tracker/seatrack.py
 SEATrack.track
