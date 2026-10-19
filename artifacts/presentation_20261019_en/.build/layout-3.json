@@ -1,0 +1,9 @@
+{"schema":"openai.presentation.layout/v5","unit":"px","slide":{"id":"sl/ofy9wn61","index":2,"layout":{"id":"ly/14ra9krq","name":"Blank"},"backgroundColor":"rgba(248,250,252,1)","position":{"left":0,"top":0,"width":1280,"height":720}},
+"elements":[
+{"id":"sh/pcjqtg36","kind":"textbox","name":"矩形 6","position":{"left":64,"top":44,"width":1152,"height":70},"text":"自训练配置与完成情况","style":{"fontSize":44,"typeface":"Hiragino Sans GB","color":"#182B40","bold":true,"alignment":"left"},"geometry":"rect","lineWidth":0},
+{"id":"sh/cza94vmx","kind":"textbox","name":"矩形 1","position":{"left":66,"top":120,"width":1140,"height":50},"text":"三个模态任务使用各自数据集与训练轮次。","style":{"fontSize":24,"typeface":"Hiragino Sans GB","color":"#637385","alignment":"left"},"geometry":"rect","lineWidth":0},
+{"id":"sh/d0jax03i","kind":"textbox","name":"矩形 2","position":{"left":1170,"top":664,"width":50,"height":28},"text":"16","style":{"fontSize":18,"typeface":"Hiragino Sans GB","color":"#637385","alignment":"left"},"geometry":"rect","lineWidth":0},
+{"id":"tb/juho7qhg","kind":"table","name":"表格 3","position":{"left":66,"top":190,"width":1148,"height":300},"text":"任务\t训练数据集\t轮次\t状态\nRGB-D\tDepthTrack\t25 / 25\t已完成\nRGB-E\tVisEvent\t45 / 45\t已完成\nRGB-T\tLasHeR\t60 / 60\t已完成","rows":4,"cols":4},
+{"id":"sh/3ah8rqlg","kind":"textbox","name":"矩形 4","position":{"left":76,"top":528,"width":1130,"height":48},"text":"RGB-T：单卡微批 4 × 梯度累积 16，有效 batch = 64","style":{"fontSize":28,"typeface":"Hiragino Sans GB","color":"#205CA0","bold":true,"alignment":"left"},"geometry":"rect","lineWidth":0},
+{"id":"sh/obq90bml","kind":"textbox","name":"矩形 5","position":{"left":66,"top":624,"width":1090,"height":38},"text":"三项任务均保留各轮权重；结果分析使用对应末轮 checkpoint。","style":{"fontSize":19,"typeface":"Hiragino Sans GB","color":"#637385","alignment":"left"},"geometry":"rect","lineWidth":0}
+]}

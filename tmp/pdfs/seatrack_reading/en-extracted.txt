@@ -1,0 +1,474 @@
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 1
+SEATrack
+Core Module Computations
+AMG-LoRA · HMoE · Prediction Head
+English edition / 2026-10-19
+Reading notes
+This document follows the current project source code. It explains the mathematics of
+project-defined modules and computation flows, while briefly describing the roles of basic
+PyTorch and timm operations. All hand-calculated values are illustrative examples, not
+predictions from an actual checkpoint or evaluation results from the paper. Equations use
+row vectors multiplied by weight matrices. PyTorch Linear usually stores weights as
+[out_features, in_features], so its implementation may use a transpose relative to this
+notation.
+Contents
+1. Shared data setup and notation
+2. AMG-LoRA: attention guidance and low-rank adaptation
+3. HMoE: aggregate into experts, then distribute back to tokens
+4. Prediction head: convert search features into a bounding box
+5. How the three modules connect
+6. Source-code references
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 2
+1. Shared data setup and notation
+Consider one RGB-D tracking sample, with R denoting RGB and X denoting depth. RGB-T
+and RGB-E follow the same structure, with thermal or event data as X. Each sample
+contains a template region and a search region. The default template is 128×128, the
+search region is 256×256, and each patch is 16×16. Each modality therefore contains 64
+template tokens and 256 search tokens, with 768 features per token.
+Each modality:
+[64 template tokens; 256 search tokens] = 320 tokens
+Shape = [B, 320, 768]
+B = 1 in this example
+B is the batch size, N is the number of tokens entering the current module, and D is the
+feature dimension per token. H_R and H_X denote the feature matrices after LayerNorm,
+not image height. h_i denotes the row vector of token i. The attention head count is
+n_head=12, giving d_head=768/12=64. In HMoE, S=2 denotes the channel split count and
+also the number of slots per expert. It is distinct from the attention head count.
+In a Transformer block that enables these modules, the main sequence is LayerNorm,
+AMG-LoRA attention, the attention residual, an HMoE fusion residual, a LayerNorm/MLP
+residual, and a second HMoE fusion residual. After all blocks, the backbone outputs search
+features for the prediction head.
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 3
+2. AMG-LoRA: attention guidance and low-rank
+adaptation
+2.1 Which parts are defined in the project?
+CEBlock_AP.cal_qkv, CEBlock_AP.amglora_attn and MergedLinear are functions or
+classes defined in the project, not built-in PyTorch interfaces with those names. They use
+library operations such as nn.Linear, LayerNorm, softmax, matrix multiplication, reshape
+and transpose. LayerNorm normalizes each token's features, reshape/transpose organize
+dimensions, and softmax converts scores into weights.
+2.2 Step 1: compute Q, K and V from tokens
+Let H be the features after LayerNorm. Q provides query features for the current position, K
+provides features for matching other positions, and V carries the information to retrieve and
+mix. In the enhanced layers, LoRA modifies K and V only. Q has no LoRA update.
+Q = H W_Q + b_Q
+K = H W_K + b_K + H A_K B_K
+V = H W_V + b_V + H A_V B_V
+H: [B, 320, 768]
+A_K, A_V: [768, 8]
+B_K, B_V: [8, 768]
+A maps 768 features down to 8, and B maps them back to 768. Their product A B is an
+update matrix of rank at most 8. The low-rank matrices for either K or V contain
+768×8+8×768=12,288 parameters. This adds a trainable correction to the original
+projection. The code initializes the LoRA B matrix to zero, so the initial correction is zero.
+Although alpha/r is defined, its multiplication is commented out in the current computation
+and must not be inserted into the equations.
+The code first produces [B,320,2304], then separates Q, K and V and divides them into 12
+heads. Each resulting tensor has shape [B,12,320,64]. Both modalities use the same
+projection parameters within a layer, but their different inputs produce different Q/K/V
+tensors.
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 4
+2.3 Step 2: compute attention scores for each modality
+S_R = Q_R K_R^T / sqrt(d_head)
+S_X = Q_X K_X^T / sqrt(d_head)
+d_head = 64, so sqrt(d_head) = 8
+S_R, S_X: [B, 12, 320, 320]
+Entry (i,j) is the matching score between query token i and key token j. These are logits
+before softmax, not probabilities. Despite its name, cal_qkv returns this score matrix and V,
+rather than returning Q, K and V separately.
+2.4 Step 3: use the other modality to guide attention relations
+S_R_new = S_R + alpha (S_X - S_R)
+S_X_new = S_X + beta  (S_R - S_X)
+alpha = self.dte2r_scaling
+beta  = self.r2dte_scaling
+alpha controls guidance from X to RGB, while beta controls guidance from RGB to X. They
+are trainable scalars in each enhanced layer, initialized to 1, with no sigmoid constraint. The
+update is a convex combination only when the coefficient lies in [0,1]. Both directions use
+the original S_R and S_X. The second update does not use the already modified score
+matrix from the first update.
+The guidance exchanges relations between positions. The RGB branch still uses its own
+V_R, and the X branch still uses its own V_X. It does not directly compute cross-modal
+attention as Q_R K_X^T.
+2.5 Step 4: retrieve information and add the residual
+P_R = softmax(S_R_new, along key positions)
+P_X = softmax(S_X_new, along key positions)
+O_R = ConcatHeads(P_R V_R) W_O + b_O
+O_X = ConcatHeads(P_X V_X) W_O + b_O
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 5
+X_R_after = X_R_before + O_R
+X_X_after = X_X_before + O_X
+Each softmax row sums to 1. Subsequent dropout during training can change that sum,
+while dropout is disabled during inference. P V forms weighted sums of token values.
+Concatenating the heads restores [B,320,768], followed by an output projection. The
+residual adds the original input from before LayerNorm, not the normalized H. The variables
+xrgb_attn and xdte_attn contain feature updates, not 320×320 attention maps.
+2.6 A hand-calculable AMG-LoRA example
+For a tractable example, use two tokens, two features per token, one attention head and
+LoRA rank 1. H below already denotes the features after LayerNorm. Omit biases and
+dropout, and set the base projections and output projection to identity matrices.
+H_R = [[1, 0],          H_X = [[1, 0],
+       [0, 1]]                 [1, 1]]
+A_K = [[1], [0]], B_K = [[1, 0]]
+A_V = [[0], [1]], B_V = [[0, 1]]
+W_K + A_K B_K = [[2, 0], [0, 1]]
+W_V + A_V B_V = [[1, 0], [0, 2]]
+Q_R = [[1,0], [0,1]]
+K_R = [[2,0], [0,1]]
+V_R = [[1,0], [0,2]]
+Q_X = [[1,0], [1,1]]
+K_X = [[2,0], [2,1]]
+V_X = [[1,0], [1,2]]
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 6
+S_R = Q_R K_R^T / sqrt(2)
+    ≈ [[1.4142, 0.0000],
+       [0.0000, 0.7071]]
+S_X = Q_X K_X^T / sqrt(2)
+    ≈ [[1.4142, 1.4142],
+       [1.4142, 2.1213]]
+Set alpha=0.75. The first RGB token's score row becomes [1.4142,1.0607], producing
+approximately [0.5875,0.4125] after softmax. Without cross-modal guidance, the original
+row [1.4142,0] would produce approximately [0.8044,0.1956]. Relations from X therefore
+make the first RGB token pay more attention to the second token.
+O_R_first = 0.5875 × [1,0] + 0.4125 × [0,2]
+          ≈ [0.5875, 0.8250]
+In the opposite direction, set beta=0.5. The first X token's score row becomes
+[1.4142,0.7071], giving approximately [0.6698,0.3302] after softmax. Applying these weights
+to X's own V gives approximately [1,0.6605]. Both directions use the other modality's
+relations while retrieving information from their own modality.
+O_X_first = 0.6698 × [1,0] + 0.3302 × [1,2]
+          ≈ [1.0000, 0.6605]
+Finally, if u_R denotes the first RGB token before LayerNorm, its output is
+u_R+[0.5875,0.8250]. Keeping the original input symbolic avoids confusing the illustrative
+normalized H with the input before normalization.
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 7
+3. HMoE: aggregate into experts, then distribute
+back to tokens
+3.1 Implementation and purpose
+HMoE, LoRP and MultiExpertLinear are custom classes in the project. HMoE receives
+tokens from both modalities, uses learned routing weights to aggregate information into
+multiple experts, and distributes the expert outputs back to each token. LayerNorm,
+softmax, matrix multiplication and reshape are underlying library operations.
+3.2 Step 1: Divide & Concat
+First split each modality's 320 tokens into template and search segments. Concatenate the
+two modalities' template segments together, and concatenate their search segments
+together. Concatenation is along the token dimension, not along the feature dimension to
+create 1536-dimensional vectors.
+Z_mix = ConcatTokens(Z_R, Z_X): [B, 128, 768]
+S_mix = ConcatTokens(S_R_features, S_X_features): [B, 512, 768]
+Template and search tokens call the same HMoE module separately, sharing its parameters
+without mixing in a single routing operation. The HMoE after attention has 4 experts, while
+the HMoE after the MLP has 8 experts. They are independent modules. The following
+example uses search fusion after attention, with N=512, D=768, E=4, S=2 and low rank r=4.
+3.3 Step 2: low-rank projection and channel splitting
+Z = LoRP_1(LayerNorm(X_mix))
+LoRP(u) = (u A + a) B + b     [inference, default activation]
+U = reshape(Z, [B, N×S, D/S])
+[B,512,768] → [B,512,768] → [B,1024,384]
+LoRP performs a biased 768→4→768 mapping, with no GELU by default and with dropout
+during training. It is an independent low-rank projection, rather than a LoRA update added
+to another frozen full-sized matrix. Each 768-dimensional token is then split into two
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 8
+384-dimensional subtokens along its channels. The order is the two parts of token 0,
+followed by the two parts of token 1, and so on. This operation does not cut the image into
+new patches.
+3.4 Step 3: compute routing scores and Dispatch
+Phi = gate_thi: [D/S, E×S] = [384,8]
+L = U Phi: [B,1024,8]
+Dispatch[i,j] = exp(L[i,j]/T_D) / sum_k exp(L[k,j]/T_D)
+Each column of Phi corresponds to an expert slot. With 4 experts and 2 slots per expert,
+there are 8 slots. L[i,j] is the routing score from input subtoken i to slot j. Dispatch
+normalizes across input subtokens, so each column sums to 1 and determines how one slot
+collects information from all inputs.
+G = Dispatch^T U
+[B,8,1024] @ [B,1024,384] = [B,8,384]
+reshape G → [B,4,2,384]
+Each slot receives a 384-dimensional weighted sum that can contain information from RGB,
+X and different spatial locations. All experts participate. This is not sparse routing that
+selects only the top-k experts.
+3.5 Step 4: expert computation and the second low-rank projection
+Expert_e(g) = (g A_e + a_e) B_e + b_e
+A_e: [384,4], B_e: [4,384]
+F_e = LoRP_2(ConcatChannels(Expert_e(G_e,1), Expert_e(G_e,2)))
+[B,4,2,384] → [B,4,768] → [B,4,768]
+Different experts use different parameters, while the two slots within one expert share that
+expert's parameters. After each slot undergoes a 384→4→384 transform, the two outputs
+from the same expert are concatenated back to 768 features. The shared linear2 then
+applies another 768→4→768 LoRP. This additional linear2 operation is part of the
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 9
+implementation and must be included.
+3.6 Step 5: Combine and token outputs
+Combine is another computation branch based on the original routing scores L. View L as
+[B,N,S,E,S]. Sum the scores over the two channel groups of each token and the two slots of
+each expert to obtain [B,N,E], then apply softmax across experts.
+M[n,e] = sum_a sum_b L[n×S+a, e×S+b]
+Combine[n,e] = softmax_e(M[n,e]/T_C)
+Y[n] = sum_e Combine[n,e] F_e
+[B,512,4] @ [B,4,768] = [B,512,768]
+Dispatch determines where each expert slot collects information. Combine determines how
+much information each token retrieves from each expert. Combine is not a second softmax
+applied to Dispatch. T_D and T_C are learnable temperatures initialized to 1, with no
+positivity constraint in the current code.
+Finally, split the outputs back into RGB and X, reunite each modality's template and search
+segments to restore [B,320,768], and add them to the corresponding input features.
+CEBlock_AP performs this residual addition, not HMoE.forward itself.
+3.7 A hand-calculable HMoE example
+For illustration, use just two tokens: one RGB token and one X token. Each token has 4
+features, with E=2 experts, S=2 slots per expert and rank r=1. This is a smaller
+mathematical model following the same computation rules. The current LoRP
+implementation defaults to 768 input and output features, so changing only HMoE's dim
+would not directly run this four-dimensional model. Omit dropout and set both temperatures
+to 1.
+Assume LayerNorm and the first LoRP produce the following tokens. The example starts at
+this intermediate result, which is distinct from the original input.
+Z_R = [1,0,0,1]
+Z_X = [1,0,0,0]
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 10
+U = [[1,0],     RGB first channel group
+     [0,1],     RGB second channel group
+     [1,0],     X first channel group
+     [0,0]]     X second channel group
+Set gate_thi to the matrix below. Its first two columns belong to expert 1, and its last two
+columns belong to expert 2. ln(2) is the natural logarithm of 2. Its exponential is exactly 2,
+making softmax easy to calculate.
+Phi = [[ln(2), 0,     0, 0],
+       [0,     ln(2), 0, 0]]
+L = U Phi
+  = [[ln(2), 0,     0, 0],
+     [0,     ln(2), 0, 0],
+     [ln(2), 0,     0, 0],
+     [0,     0,     0, 0]]
+Apply softmax across input subtokens to obtain the collection weights for each of the four
+slots. Each line below lists one complete column of Dispatch.
+Expert 1, slot 1: [2,1,2,1]/6
+Expert 1, slot 2: [1,2,1,1]/5
+Expert 2, slot 1: [1,1,1,1]/4
+Expert 2, slot 2: [1,1,1,1]/4
+G_1,1 = [2/3, 1/6]
+G_1,2 = [2/5, 2/5]
+G_2,1 = [1/2, 1/4]
+G_2,2 = [1/2, 1/4]
+For example, the first slot of expert 1 equals (2/6)[1,0]+(1/6)[0,1]+(2/6)[1,0]+(1/6)[0,0], giving
+[2/3,1/6]. This slot already combines information from both modalities.
+To illustrate low-rank expert computation, let expert 1 map [x,y] to [x,2x] and expert 2 map
+[x,y] to [2y,y]. Both can be expressed as rank-1 A_e B_e mappings with zero bias. Process
+each expert's two slots separately, then concatenate their outputs.
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 11
+Expert 1:
+  [2/3,1/6] → [2/3,4/3]
+  [2/5,2/5] → [2/5,4/5]
+  Concatenated = [2/3,4/3,2/5,4/5]
+Expert 2:
+  [1/2,1/4] → [1/2,1/4]
+  [1/2,1/4] → [1/2,1/4]
+  Concatenated = [1/2,1/4,1/2,1/4]
+Next apply linear2, as required by the source code. Let this shared rank-1 projection add the
+first and third components to obtain t, then output [t,0,t,0].
+F_1 = [16/15,0,16/15,0]
+F_2 = [1,0,1,0]
+Now compute Combine. For the RGB token, the four scores associated with expert 1 sum to
+2ln(2)=ln(4), while the sum for expert 2 is 0. Its expert weights are therefore [4/5,1/5]. For
+the X token, the aggregated expert scores are [ln(2),0], yielding weights [2/3,1/3].
+Y_R = (4/5)F_1 + (1/5)F_2
+    = [79/75,0,79/75,0]
+    ≈ [1.0533,0,1.0533,0]
+Y_X = (2/3)F_1 + (1/3)F_2
+    = [47/45,0,47/45,0]
+    ≈ [1.0444,0,1.0444,0]
+These are the two token updates returned by HMoE. If u_R denotes the RGB token before
+the HMoE call, the caller obtains u_R+Y_R, and similarly for X. Different tokens have
+different Combine weights, so they can produce different outputs while reading the same set
+of experts.
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 12
+4. Prediction head: convert search features into
+a bounding box
+4.1 Implementation and input
+CenterPredictor, get_score_map, cal_bbox and the model's forward_head are structures or
+functions defined in the project. They use PyTorch Conv2d, BatchNorm2d, ReLU, sigmoid,
+max and gather. Convolutions extract local features, BatchNorm normalizes intermediate
+activations, ReLU supplies nonlinearity, and gather retrieves values at selected indices. The
+explanation below focuses on how the three output branches jointly predict a box.
+After all Transformer blocks, both streams undergo final normalization, and the search
+features are selected. The RGB and X search features are added element by element,
+producing [B,256,768]. This is addition, not channel concatenation.
+F_search = F_R_search + F_X_search
+[B,256,768] → [B,768,16,16]
+The 256 search tokens correspond to a 16×16 spatial grid, so they can be reshaped into a
+two-dimensional feature map with 768 channels per location. Template features are not
+separately passed to the prediction head, but they have already influenced the search
+features through earlier attention operations.
+4.2 Three independent branches
+The center-score, size and offset branches have the same layer structure but use separate
+convolution parameters. Each branch applies four 3×3 Conv-BN-ReLU layers with channels
+768→256→128→64→32, keeping the spatial grid at 16×16. A final 1×1 convolution
+produces the required output channels.
+Center score:
+  score_map: [B,1,16,16]
+  Meaning: target-center score at each grid position
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 13
+Size:
+  size_map: [B,2,16,16]
+  Meaning: normalized width and height at each position
+Offset:
+  offset_map: [B,2,16,16]
+  Meaning: x and y corrections relative to each grid coordinate
+Center scores and sizes pass through sigmoid and are clamped to [0.0001,0.9999]. Offsets
+have no sigmoid and can take arbitrary real values. Center scores are computed
+independently at each location, rather than using a single softmax over all 256 locations, so
+the entire score map need not sum to 1.
+4.3 Select a location and retrieve its size and offset
+idx = argmax(flatten(score_map))
+row = idx // 16
+col = idx % 16
+[w,h]   = size_map at idx
+[dx,dy] = offset_map at idx
+First find the location with the highest center score, then retrieve size and offset from that
+same location. The three branches must not independently select their own maxima,
+because that could combine a center, size and offset from different positions.
+4.4 Decode the normalized bounding box
+cx = (col + dx) / 16
+cy = (row + dy) / 16
+box = [cx, cy, w, h]
+cx and cy are center coordinates normalized relative to the search image. w and h are
+already normalized to the search image, so they must not be divided by 16 again. The
+output is in center-based cxcywh form, not top-left xywh form and not original-image pixel
+coordinates.
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 14
+4.5 A complete numerical example
+Suppose the selected position is row 7, column 9, using zero-based indexing. Its center
+score is 0.92, offset is [0.25,0.5], and size is [0.25,0.5]. These are hypothetical predictions
+used to illustrate decoding.
+idx = 7×16 + 9 = 121
+cx = (9+0.25)/16 = 0.578125
+cy = (7+0.5)/16 = 0.46875
+w = 0.25
+h = 0.5
+Normalized box:
+  [0.578125, 0.46875, 0.25, 0.5]
+To express this box in the 256×256 search image supplied to the network, multiply all
+components by 256. The center becomes [148,120], and the size becomes [64,128].
+Subtract half the width and height to obtain the top-left coordinate [116,56].
+Search-image cxcywh = [148,120,64,128]
+Search-image xywh   = [116,56,64,128]
+The prediction head uses index 121 within the search sequence. In the earlier full sequence
+containing 64 template tokens, it corresponds to index 64+121=185, provided tokens have
+not been pruned and their order is preserved.
+4.6 Tracker post-processing and original-image coordinates
+The tracker multiplies the center-score map by a Hann window and then calls cal_bbox
+again. This window favors positions near the search-region center, so the final selected
+location can differ from the raw score-map maximum. The example above can be
+interpreted as a case where row 7, column 9 remains selected after windowing.
+response = HannWindow × score_map
+box = cal_bbox(response, size_map, offset_map)
+Suppose the search crop spans 512 pixels in the original image and is resized to 256 pixels
+for the model, giving resize_factor=0.5. Multiply the normalized box by
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 15
+search_size/resize_factor=512 to obtain pixel coordinates relative to the crop in the original
+image.
+Crop-relative cxcywh:
+  [0.578125,0.46875,0.25,0.5] × 512
+  = [296,240,128,256]
+If the crop origin in the original image is [100,200], the target center is
+[296+100,240+200]=[396,440]. Converting to top-left form gives [332,312,128,256]. In
+map_box_back, the crop origin is computed from the previous frame's target center minus
+half the crop side length. The final box is also clipped to the image boundaries.
+Original-image center = [396,440]
+Original-image size   = [128,256]
+Original-image xywh   = [396-64,440-128,128,256]
+                      = [332,312,128,256]
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 16
+5. How the three modules connect
+AMG-LoRA adapts the K/V projections and uses the other modality's attention relations to
+guide information retrieval. HMoE receives tokens updated by attention or the MLP,
+aggregates information from both modalities into experts, and returns a fusion update
+according to each token's weights. The prediction head receives the final search features,
+produces center, size and offset maps, and decodes them into a bounding box.
+AMG-LoRA and HMoE operate within Transformer blocks during feature processing. The
+prediction head follows the encoder. HMoE still outputs token features, while the prediction
+head converts those features into the target position and size used for tracking.
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 17
+6. Source-code references
+AMG-LoRA and block residual/fusion order:
+/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn_blocks.py
+CEBlock_AP.cal_qkv
+CEBlock_AP.amglora_attn
+CEBlock_AP.forward
+LoRA, low-rank projections and expert routing:
+/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/attn.py
+MergedLinear
+Attention
+LoRP
+MultiExpertLinear
+HMoE.forward
+Final fusion of search features:
+/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/vit_ci.py
+x_fusion = x_rgb + x_dte
+Reshaping features and calling the prediction head:
+/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/seatrack/seatrack.py
+SEATrack.forward_head
+Prediction branches and box decoding:
+/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/models/layers/head.py
+CenterPredictor.get_score_map
+CenterPredictor.cal_bbox
+
+SEATrack  /  Core Module Explanations
+AMG-LoRA  /  HMoE  /  Prediction Head
+Page 18
+Hann window and mapping back to the original image:
+/Users/lzy/Desktop/GitHub/seatrack/SEATrack-main/lib/test/tracker/seatrack.py
+SEATrack.track
+SEATrack.map_box_back
+Note:
+This document explains the current default configuration and inference computation path.
+Reduced token counts, feature dimensions, expert counts and ranks in the examples do not
+represent the real model's defaults. Training-time dropout, loss functions and
+backpropagation are outside the hand-calculated examples.

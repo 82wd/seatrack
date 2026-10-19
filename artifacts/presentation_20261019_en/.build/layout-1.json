@@ -1,0 +1,8 @@
+{"schema":"openai.presentation.layout/v5","unit":"px","slide":{"id":"sl/y90nupkv","index":0,"layout":{"id":"ly/14ra9krq","name":"Blank"},"backgroundColor":"rgba(248,250,252,1)","position":{"left":0,"top":0,"width":1280,"height":720}},
+"elements":[
+{"id":"sh/ts7md4r2","kind":"textbox","name":"矩形 5","position":{"left":64,"top":44,"width":1152,"height":70},"text":"复现工作完成情况","style":{"fontSize":44,"typeface":"Hiragino Sans GB","color":"#182B40","bold":true,"alignment":"left"},"geometry":"rect","lineWidth":0},
+{"id":"sh/547294r6","kind":"textbox","name":"矩形 1","position":{"left":66,"top":120,"width":1140,"height":50},"text":"以全部复现完成为汇报前提，覆盖数据、训练、推理和指标分析。","style":{"fontSize":24,"typeface":"Hiragino Sans GB","color":"#637385","alignment":"left"},"geometry":"rect","lineWidth":0},
+{"id":"sh/k3yl0zql","kind":"textbox","name":"矩形 2","position":{"left":1170,"top":664,"width":50,"height":28},"text":"14","style":{"fontSize":18,"typeface":"Hiragino Sans GB","color":"#637385","alignment":"left"},"geometry":"rect","lineWidth":0},
+{"id":"tb/y1kvmxor","kind":"table","name":"表格 3","position":{"left":66,"top":191,"width":1148,"height":354},"text":"工作阶段\t完成内容\n数据与环境\t完成双模态数据配置、配对检查和运行环境适配\n模型训练\t完成 RGB-D 25轮、RGB-E 45轮、RGB-T 60轮训练\n测试与评估\t完成各数据集全量推理、轨迹验收和指标计算\n实验整理\t完成配置、权重、日志、轨迹与指标报告整理","rows":5,"cols":2},
+{"id":"sh/65g3298r","kind":"textbox","name":"矩形 4","position":{"left":66,"top":624,"width":1090,"height":38},"text":"完成状态按本版汇报前提呈现；具体结果以最终评测报告为准。","style":{"fontSize":19,"typeface":"Hiragino Sans GB","color":"#637385","alignment":"left"},"geometry":"rect","lineWidth":0}
+]}
