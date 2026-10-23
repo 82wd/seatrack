@@ -14,7 +14,7 @@
 
 - `vot.analysis.multistart.EAOScore`：`[[0.7375977345234603]]`。
 - `vot.analysis.multistart.AverageAccuracyRobustness`：`[[0.8206357885293973, 0.8859998200859379, [0.8859998200859379, 0.8206357885293973], 1162375, 80741]]`。
-- `EAOCurve` 为曲线数据，不作为额外主指标；用户回传的是截断摘要，未在本地保存完整曲线。
+- `EAOCurve` 为曲线数据，不作为额外主指标；此前用户回传为截断摘要；完整曲线现已随本地JSON归档。
 
 ## 服务器产物与验证范围
 
@@ -23,16 +23,14 @@
 - 报告：`/nas/liziyan103/seatrack/evaluation_runs/self_vot22_ep0025/full/analysis/self_vot22_ep0025/results.json`。
 - 分析日志：`/nas/liziyan103/seatrack/logs/self_vot22_analysis_20261023_104102.log`。
 - 单序列日志：`/nas/liziyan103/seatrack/logs/self_vot22_smoke_20261022_003123.log`。
-- 权重使用清单（尚未回收核查）：`/nas/liziyan103/seatrack/evaluation_runs/self_vot22_ep0025/checkpoint_used.json`。
+- 权重使用清单（已回收并解析）：`/nas/liziyan103/seatrack/evaluation_runs/self_vot22_ep0025/checkpoint_used.json`。
 
 入口为 [test_vot22_self.py](../../../scripts/test_vot22_self.py)，在 VOT 子进程内覆盖 checkpoint，使用 `vot2022/rgbd` stack；分析禁用缓存。用户操作服务器，助手未独立连接核验。完整 JSON、HTML 与权重使用清单现已本地归档核验；运行日志、轨迹和权重文件仍未在本次回收。
 
 此前 RGB-D 自训练文件与官方路径文件参数相同的来源疑点尚未解决；本次评测完成不消除这一限制。相关证据与经过见 [复现日志](../../../复现日志.md)。
 
-## 2026-10-23 本地归档核验更新
+## 本地核验结果
 
-provenance/checkpoint_used.json已下载，记录的RGB-D权重SHA256为f019674f7f50b1fbf867eade32649d5bf18e120a10e606fa10e30359a3afd1e7，与历史自训练文件哈希记录一致；这不等于本次读取权重文件重算哈希。虽然用户下载汇总显示8项成功，本地实际未找到reports目录，完整VOT报告尚待补下载，不能标记为归档完成。
+2026-10-23补下载后，已实际解析[results.json](reports/results.json)，确认tracker=rgbd_self_ep0025、baseline实验、127序列；名单与[权重使用清单](provenance/checkpoint_used.json)一致，三项指标与上表一致。[report.html](reports/report.html)已保存且非空，未逐页做视觉验收。
 
-## 2026-10-23 补下载后的最终核验
-
-用户重跑脚本后回传downloaded=1、skipped=7、failed=0、missing=0。本地实际读取reports/results.json（40648字节）和reports/report.html（166195字节），确认tracker=rgbd_self_ep0025、baseline实验、127序列；序列集合与provenance/checkpoint_used.json一致。EAO/Accuracy/Robustness原始值分别为0.7375977345234603、0.8206357885293973、0.8859998200859379，与此前回传一致。上节报告目录缺失问题已解决。仅验证HTML文件非空，未逐项检查网页视觉显示；权重来源疑点未因此消除。
+清单SHA256为`f019674f7f50b1fbf867eade32649d5bf18e120a10e606fa10e30359a3afd1e7`，与历史自训练文件记录一致；这不是本次读取远端权重重算哈希。首次下载后目录缺失及补下载过程保留在[日志](../../../复现日志.md#log-2026-10-23)，当前已不存在报告缺失问题。

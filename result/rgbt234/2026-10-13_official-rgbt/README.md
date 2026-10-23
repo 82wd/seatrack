@@ -18,8 +18,4 @@
 - 指标：`/nas/liziyan103/seatrack/evaluation_runs/20261013_remaining/rgbt234/official_rgbt234_full_20261013_074307_metrics.json`
 - 日志：`/nas/liziyan103/seatrack/logs/official_rgbt234_full_20261013_074307.log`
 
-本地目前仅保存用户回传摘要；完整 JSON、轨迹及运行日志尚未下载归档。未连接服务器独立复查，未运行官方 MATLAB 评估。换行兼容修复及各步骤见 [复现日志](../../../复现日志.md)。
-
-## 2026-10-23 本地归档核验更新
-
-完整指标JSON已下载至本目录reports/并成功解析，指标与此前回传一致；以上“报告尚未下载”的历史说明由本条更新。此次未重新运行评测，未据报告检查所有轨迹。
+2026-10-23已下载并解析[完整JSON](reports/official_rgbt234_full_20261013_074307_metrics.json)，指标及234序列/116649帧与回传一致；完整轨迹及运行日志尚未下载归档。未连接服务器独立复查，未运行官方 MATLAB 评估。换行兼容修复及各步骤见 [复现日志](../../../复现日志.md)。
