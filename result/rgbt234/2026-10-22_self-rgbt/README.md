@@ -20,3 +20,7 @@
 运行位置为 cp-2；此前回传硬件为 RTX 3090，提供的启动指令选用 GPU 6。程序报告 elapsed 8355 秒，含检查和跳过已完成序列等开销，不能视为全量纯推理时间；yellowcar 的 11.27048 FPS 仅为该序列的脚本计时。
 
 跟踪入口：[test_rgbt234_self.py](../../../scripts/test_rgbt234_self.py)。指标脚本：[evaluate_rgbt234.py](../../../scripts/evaluate_rgbt234.py)。官方权重对照：[历史结果](../2026-10-13_official-rgbt/README.md)。
+
+## 2026-10-23 本地归档核验更新
+
+完整指标JSON已下载至本目录reports/并成功解析，指标与此前回传一致；以上“报告尚未下载”的历史说明由本条更新。此次未重新运行评测，未据报告检查所有轨迹。

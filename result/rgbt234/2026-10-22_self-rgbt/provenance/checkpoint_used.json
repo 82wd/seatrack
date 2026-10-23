@@ -1,0 +1,6 @@
+{
+  "checkpoint": "/nas/liziyan103/seatrack/training_runs/20261011_remaining/rgbt/models/checkpoints/rgbt/SEATrack_ep0060.pth.tar",
+  "sha256": "e2547abb9c45b5b47601fae155ee3ede8e6946b6448f694ed34996b18e09da4d",
+  "data": "/nas/liziyan103/seatrack/datasets/rgbt234",
+  "project": "/nas/liziyan103/seatrack/SEATrack"
+}

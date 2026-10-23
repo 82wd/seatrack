@@ -1,0 +1,167 @@
+SEATrack 论文复现结果汇总
+整理日期：2026年10月23日（北京时间）
+项目目录：/Users/lzy/Desktop/GitHub/seatrack
+
+一、当前结论
+
+论文涉及五个评测数据集，但只需要训练三份模型：
+  RGB-T：在 LasHeR 训练，60轮；用于 LasHeR 和 RGBT234 评测。
+  RGB-D：在 DepthTrack 训练，25轮；用于 DepthTrack 和 VOT-RGBD2022 评测。
+  RGB-E：在 VisEvent 训练，45轮；用于 VisEvent 评测。
+
+根据现有记录，三项训练均已报告完成。
+本次补充的 RGBT234 和 VOT2022 自训练权重评测均已完成，并取得指标。
+现有自训练评测记录还包括 DepthTrack 和 VisEvent；LasHeR 自训练评测尚未收到最终指标。
+官方权重评测已有四个数据集的指标；官方权重的 VOT2022 最终指标尚未回传。
+
+说明：“尚未回传”表示本地没有足够记录确认，不代表服务器一定没有完成。
+本汇总区分论文数值、历史官方权重评测、自训练路径权重评测，不混用三者。
+
+二、五个数据集的指标对照
+
+以下均按百分数或原始分数乘100展示，数值越高越好。
+VOT2022 的 EAO、Accuracy、Robustness 原始值为0到1，表中乘100便于与论文对照。
+“—”表示本地尚无最终指标，不表示0分。
+
+1. LasHeR（RGB-T，245个测试序列）
+   指标顺序：PR / NPR / SR
+   论文：            71.6 / 67.5 / 57.3
+   官方权重评测：    71.5961 / 67.4782 / 57.2631
+   自训练权重评测：  — / — / —
+   状态：官方权重指标已回传，245序列、220703帧。
+         自训练第60轮权重已报告完成，测试入口已准备；本地尚无最终测试指标。
+
+2. RGBT234（RGB-T，234个测试序列）
+   指标顺序：MPR / MSR
+   论文：            87.8 / 63.9
+   官方权重评测：    87.814611 / 63.908269
+   自训练权重评测：  86.141946 / 63.733215
+   状态：自训练权重全量跟踪及指标计算完成，234序列、116649帧，跟踪退出码0。
+   对照：同一Python评测脚本下，自训练结果较历史官方结果低
+         1.672665和0.175054个百分点。尚不能据此确定差异原因。
+   主结果采用 rounded_reference_protocol（预测框取整口径）。
+   未取整诊断值：86.183550 / 63.670792；不作为主结果，也不按分数高低选口径。
+
+3. DepthTrack（RGB-D，50个测试序列）
+   指标顺序：PR / RE / F-score
+   论文：            62.9 / 63.5 / 63.2
+   官方权重评测：    62.909598 / 63.545955 / 63.226176
+   自训练路径评测：  62.9096 / 63.5460 / 63.2262
+   状态：已有自训练路径评测报告读数，但权重来源疑点仍未解决，见第四部分。
+         官方权重评测覆盖50序列、76373帧，完整报告已在本地归档。
+   注意：自训练结果按用户回传的四位小数记录，不用官方完整精度补齐。
+
+4. VOT-RGBD2022（RGB-D，127个测试序列）
+   指标顺序：EAO / Accuracy / Robustness（均乘100）
+   论文：            73.6 / 82.1 / 88.4
+   官方权重评测：    — / — / —
+   自训练路径评测：  73.759773 / 82.063579 / 88.599982
+   保留一位小数：    73.8 / 82.1 / 88.6
+   状态：单序列、127序列全量跟踪及JSON/HTML分析均报告成功、退出码0。
+         报告tracker为 rgbd_self_ep0025，实验名baseline，序列数127。
+   原始分数：
+     EAO        = 0.7375977345234603
+     Accuracy   = 0.8206357885293973
+     Robustness = 0.8859998200859379
+   对照：相对论文展示值约为+0.160、-0.036、+0.200（乘100后的分数差）。
+         论文只给一位小数，该差值不是与其未舍入原始结果的精确差异。
+         结果数值接近论文，不据此声称统计显著提升。
+   注意：使用RGB-D自训练路径权重，仍继承第四部分的权重来源限制。
+
+5. VisEvent（RGB-E，320个测试序列）
+   指标顺序：PR（20像素）/ SR（成功曲线均值）
+   论文：            77.1 / 60.3
+   官方权重评测：    77.09504076887207 / 60.2609637859865
+   自训练路径评测：  77.09504076887207 / 60.2609637859865
+   状态：320序列跟踪及参考指标计算完成；自训练与官方路径模型参数相同，
+         权重来源疑点仍未解决。另有一条序列的标注对应问题，见第四部分。
+
+三、训练完成情况与实验条件
+
+RGB-T：LasHeR训练60轮，末轮ep0060，用户回传训练及核验完成。
+       后期使用单卡microbatch=4、累积16次，有效batch=64，FP32。
+       该梯度累积方案不能宣称与论文双卡训练数值完全等价。
+RGB-D：DepthTrack训练25轮，末轮ep0025。
+       历史检查显示第5到第25轮有234个张量变化，优化器步数4685→23425。
+RGB-E：VisEvent训练45轮，末轮ep0045，曾核验45份checkpoint，
+       早末轮有228个张量变化。
+
+训练Loss、训练IoU、checkpoint数量均不是测试集性能指标。
+本次新增评测在cp-2执行，用户回传硬件为RTX 3090；启动指令使用GPU6。
+此前训练/评测记录涉及RTX 4090机器，不能将两者硬件条件混写。
+RGBT234的elapsed=8355秒包含检查与跳过已有序列等开销；
+yellowcar约11.27 FPS仅是单序列脚本计时，不能与论文63.5 FPS直接比较。
+
+四、验证范围与待核查问题
+
+1. RGB-D和RGB-E权重来源仍需核查。
+   历史比较发现：各自的自训练末轮模型与当时“官方路径”下模型，
+   net参数逐张量相同，DepthTrack的50条轨迹和VisEvent的320条轨迹也分别相同。
+   同时已有早末轮参数变化证据，不能因此推断训练没有发生。
+   官方路径是否被替换、文件复制或恢复链路等原因尚未确定。
+   准确结论是“训练过程有参数更新，指定路径模型已有评测结果”；
+   不能据当前证据认定独立自训练精确复现了作者模型。
+
+2. Python指标协议的验证边界。
+   LasHeR、RGBT234、VisEvent使用项目中的Python参考评测实现，
+   尚未与官方MATLAB工具交叉验证。
+   RGBT234官方与自训练对照采用同一脚本和相同主结果口径。
+   DepthTrack和VOT2022使用VOT toolkit分析；VOT2022 stack为vot2022/rgbd。
+
+3. VisEvent标注差异。
+   dvSave-2021_02_06_09_23_50_person1的预测有332行，官方标注306行。
+   当前按已核对的官方程序规则取预测前306行；没有删掉该序列。
+   图像与标注的实际时间对应问题尚未解决，不将319序列诊断值作为正式结果。
+
+4. 完成状态与独立核验的区别。
+   本轮RGBT234和VOT2022操作由用户在服务器执行。RGBT234完整指标JSON、
+   两项checkpoint_used.json及VOT2022完整JSON/HTML报告已本地解析核对。
+   VOT2022报告的127个序列与权重使用清单一致，三项指标与此前回传一致。
+   新回收的其他报告包括LasHeR官方、RGBT234官方、VisEvent自训练JSON，
+   以及DepthTrack自训练JSON/HTML；指标均与此前回传一致。完整日志、轨迹仍待归档。
+   “程序成功并输出指标”不等于所有产物已完成独立归档检查。
+
+五、本次新增结果的服务器位置
+
+RGBT234：
+  权重：
+  /nas/liziyan103/seatrack/training_runs/20261011_remaining/rgbt/models/checkpoints/rgbt/SEATrack_ep0060.pth.tar
+  轨迹目录：
+  /nas/liziyan103/seatrack/SEATrack/RGBT_workspace/self_rgbt_ep0060_rgbt234/RGBT234
+  指标报告：
+  /nas/liziyan103/seatrack/SEATrack/RGBT_workspace/self_rgbt_ep0060_rgbt234/metrics_20261022_002510.json
+  跟踪日志：
+  /nas/liziyan103/seatrack/logs/self_rgbt234_full_20261021_135732.log
+
+VOT2022：
+  权重：
+  /nas/liziyan103/seatrack/SEATrack/SEATrack-main/models_rgbd_self/checkpoints/rgbd/SEATrack_ep0025.pth.tar
+  全量工作区：
+  /nas/liziyan103/seatrack/evaluation_runs/self_vot22_ep0025/full
+  指标报告：
+  /nas/liziyan103/seatrack/evaluation_runs/self_vot22_ep0025/full/analysis/self_vot22_ep0025/results.json
+  分析日志：
+  /nas/liziyan103/seatrack/logs/self_vot22_analysis_20261023_104102.log
+
+以上文件名保留服务器生成时的时间，不擅自改写为北京时间。
+
+六、后续待办
+
+  [已完成] RGBT234自训练权重全量跟踪与指标计算。
+  [已完成] VOT2022自训练路径权重全量跟踪与指标分析。
+  [待确认] LasHeR自训练权重的最终测试指标。
+  [待回收] 官方权重VOT2022的最终报告；不能用自训练结果替代。
+  [待核查] RGB-D、RGB-E自训练权重与官方路径权重相同的来源问题。
+  [已归档] 本轮RGBT234完整指标JSON及两项权重使用清单。
+  [已归档] VOT2022完整JSON/HTML报告；补下载后已核对127序列及三项指标。
+  [待归档] 本轮两项评测的完整轨迹和日志。
+
+七、本地依据
+
+  操作和证据记录：/Users/lzy/Desktop/GitHub/seatrack/复现日志.md
+  结果索引：/Users/lzy/Desktop/GitHub/seatrack/result/README.md
+  论文指标对应：/Users/lzy/Desktop/GitHub/seatrack/SEATrack_中文译文.md（表1）
+  RGBT234新增结果：/Users/lzy/Desktop/GitHub/seatrack/result/rgbt234/2026-10-22_self-rgbt/README.md
+  VOT2022新增结果：/Users/lzy/Desktop/GitHub/seatrack/result/vot22/2026-10-23_self-rgbd/README.md
+
+本文件是截至2026年10月23日已取得证据的汇总；未填入推测结果，也未启动新实验。
